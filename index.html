@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>La Defensa Láctea de Esther: Ultimate Edition ✨</title>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #333; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; touch-action: none; user-select: none; -webkit-user-select: none; }
+        #canvas-container { width: 100vw; height: 100vh; }
+        
+        /* UI Overlay */
+        #ui {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: white;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 15px;
+            border-radius: 12px;
+            pointer-events: none;
+            user-select: none;
+            border: 2px solid rgba(255,255,255,0.1);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            z-index: 5;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .score-display { font-size: 1.5rem; color: #4fffa6; font-weight: bold; font-family: monospace; }
+        
+        /* Name Tag */
+        #name-tag {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            pointer-events: none;
+            transform: translate(-50%, -100%);
+            white-space: nowrap;
+            border: 1px solid rgba(255,255,255,0.3);
+            z-index: 4;
+            display: none; 
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Joystick */
+        #joystick-zone {
+            position: absolute;
+            bottom: 30px;
+            left: 30px;
+            width: 120px;
+            height: 120px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            z-index: 10;
+            touch-action: none;
+        }
+        #joystick-knob {
+            width: 50px;
+            height: 50px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            pointer-events: none;
+        }
+
+        /* Start Screen */
+        #start-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(20, 20, 20, 0.9);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            z-index: 100;
+            backdrop-filter: blur(5px);
+            text-align: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .btn-start {
+            padding: 20px 50px;
+            background: #00b06f; 
+            color: white;
+            font-size: 1.5rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 8px;
+            margin-top: 30px;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(0,176,111,0.4);
+            transition: transform 0.1s;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .btn-start:active { transform: scale(0.95); }
+        
+        /* Game Over Message */
+        #message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(50, 20, 0, 0.95);
+            color: #00ff00;
+            padding: 30px 50px;
+            border-radius: 15px;
+            text-align: center;
+            display: none;
+            border: 4px solid #00ff00;
+            z-index: 20;
+            pointer-events: none; 
+            font-family: 'Courier New', Courier, monospace;
+            box-shadow: 0 0 50px #00ff00;
+            width: 80%;
+            max-width: 400px;
+            box-sizing: border-box;
+        }
+        .fart-text { font-size: 3rem; margin: 0; animation: shake 0.5s infinite; }
+        .subtitle { font-size: 1.5rem; color: #fff; margin-top: 15px; font-weight: bold; text-transform: uppercase; }
+        
+        @keyframes shake {
+            0% { transform: translate(1px, 1px) rotate(0deg); }
+            25% { transform: translate(-2px, -2px) rotate(-2deg); }
+            50% { transform: translate(2px, 2px) rotate(2deg); }
+            75% { transform: translate(-1px, 1px) rotate(-1deg); }
+            100% { transform: translate(1px, -1px) rotate(1deg); }
+        }
+
+        .controls-hint {
+            position: absolute;
+            bottom: 20px;
+            width: 100%;
+            text-align: center;
+            color: rgba(255,255,255,0.5);
+            pointer-events: none;
+            font-size: 0.8rem;
+        }
+
+    </style>
+</head>
+<body>
+    <div id="start-overlay">
+        <h1 style="font-size: 2.5rem; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 2px;">Defensa Láctea</h1>
+        <p style="font-size: 1.1rem; opacity: 0.8;">¡Protege el KPI! ✨</p>
+        <p style="color: #ff99cc; margin-top: 5px; font-size: 0.9rem;">Joystick para Moverse.<br>Toca para Lanzar Rayo Lactasa.</p>
+        <button class="btn-start" id="start-button">EMPEZAR</button>
+    </div>
+
+    <div id="ui">
+        <div style="width: 15px; height: 15px; background: #00b06f; border-radius: 50%; box-shadow: 0 0 10px #00b06f;"></div>
+        <div>
+            <div style="font-size: 0.7rem; opacity: 0.7; text-transform: uppercase;">Lácteos Destruidos</div>
+            <div class="score-display" id="score">0</div>
+        </div>
+    </div>
+
+    <div id="name-tag">Esther</div>
+    
+    <!-- Joystick for Mobile -->
+    <div id="joystick-zone">
+        <div id="joystick-knob"></div>
+    </div>
+    
+    <div id="message">
+        <h2 class="fart-text">¡PRRRT! 💨</h2>
+        <div class="subtitle">"Esther se cagó"</div>
+        <p style="color: #aaa; font-size: 0.9rem; margin-top: 20px;">Toca para reiniciar</p>
+    </div>
+
+    <div class="controls-hint">PC: Scroll para Zoom • Móvil: Pellizcar</div>
+
+    <div id="canvas-container"></div>
+
+    <!-- Load Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <script>
+        // --- GAME CONFIG ---
+        const CONFIG = {
+            spawnRateInitial: 50,
+            dairySpeedBase: 0.05,
+            moveSpeed: 0.18,
+            cameraDefaults: {
+                fov: 60,
+                position: new THREE.Vector3(0, 8, 12),
+                offset: new THREE.Vector3(0, 8, 12),
+                minZoom: 5,
+                maxZoom: 25,
+            },
+            colors: {
+                bg: 0x2a2a2a, 
+                floor: 0x444444, 
+                wall: 0x777777,  
+                skin: 0xdabfa6, vest: 0x1a1a1a, shirt: 0xffffff,
+                hair: 0x221a15, lanyard: 0x111111, 
+                exitGreen: 0x00ff88, 
+                cheese: 0xffcc00, milk: 0xf0f0f0, mouth: 0x992222,
+                beam: 0x4fffa6, 
+                desk: 0x5a3d2e, 
+                plant: 0x2e8b57, pot: 0x8b4513,
+                screen: 0x111111, 
+                screenOn: 0x00ddff
+            }
+        };
+
+        // --- SETUP ---
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(CONFIG.colors.bg);
+        scene.fog = new THREE.Fog(CONFIG.colors.bg, 10, 45);
+
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        let cameraDistance = 1; 
+        
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        container.appendChild(renderer.domElement);
+
+        // --- GAME STATE ---
+        let gameActive = false;
+        let score = 0;
+        let frameCount = 0;
+        let spawnRate = CONFIG.spawnRateInitial;
+        let dairySpeed = CONFIG.dairySpeedBase;
+        const enemies = [];
+        const particles = [];
+        const beams = []; 
+        
+        const keys = { w: false, a: false, s: false, d: false };
+        let joystickVector = { x: 0, y: 0 };
+        let isJoystickActive = false;
+        
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+
+        let armAnimationState = 0; 
+        let legAnimationTime = 0;
+
+        // Audio
+        let audioCtx;
+        try {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        } catch(e) { console.log("AudioContext not supported"); }
+        
+        let audioEnabled = false;
+        let speechSynth = ('speechSynthesis' in window) ? window.speechSynthesis : null;
+        let gameVoice = null;
+
+        // UI Elements
+        const nameTag = document.getElementById('name-tag');
+        const joyZone = document.getElementById('joystick-zone');
+        const joyKnob = document.getElementById('joystick-knob');
+
+        // --- JOYSTICK LOGIC ---
+        let joyStartX = 0, joyStartY = 0;
+
+        joyZone.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            isJoystickActive = true;
+            const touch = e.changedTouches[0];
+            const rect = joyZone.getBoundingClientRect();
+            joyStartX = rect.left + rect.width / 2;
+            joyStartY = rect.top + rect.height / 2;
+            updateJoystick(touch.clientX, touch.clientY);
+        }, {passive: false});
+
+        joyZone.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            if (!isJoystickActive) return;
+            const touch = e.changedTouches[0];
+            updateJoystick(touch.clientX, touch.clientY);
+        }, {passive: false});
+
+        joyZone.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            isJoystickActive = false;
+            joystickVector = { x: 0, y: 0 };
+            joyKnob.style.transform = `translate(-50%, -50%)`;
+        }, {passive: false});
+
+        function updateJoystick(clientX, clientY) {
+            const maxDist = 40;
+            let dx = clientX - joyStartX;
+            let dy = clientY - joyStartY;
+            const dist = Math.sqrt(dx*dx + dy*dy);
+            
+            const visualDist = Math.min(dist, maxDist);
+            const angle = Math.atan2(dy, dx);
+            const vx = Math.cos(angle) * visualDist;
+            const vy = Math.sin(angle) * visualDist;
+            joyKnob.style.transform = `translate(calc(-50% + ${vx}px), calc(-50% + ${vy}px))`;
+
+            const inputMag = Math.min(dist, maxDist) / maxDist;
+            joystickVector.x = Math.cos(angle) * inputMag;
+            joystickVector.y = Math.sin(angle) * inputMag;
+        }
+
+        // --- KEYBOARD LOGIC ---
+        window.addEventListener('keydown', (e) => {
+            const k = e.key.toLowerCase();
+            if(k === 'w' || k === 'arrowup') keys.w = true;
+            if(k === 's' || k === 'arrowdown') keys.s = true;
+            if(k === 'a' || k === 'arrowleft') keys.a = true;
+            if(k === 'd' || k === 'arrowright') keys.d = true;
+        });
+        window.addEventListener('keyup', (e) => {
+            const k = e.key.toLowerCase();
+            if(k === 'w' || k === 'arrowup') keys.w = false;
+            if(k === 's' || k === 'arrowdown') keys.s = false;
+            if(k === 'a' || k === 'arrowleft') keys.a = false;
+            if(k === 'd' || k === 'arrowright') keys.d = false;
+        });
+
+        // --- MAIN EVENT LISTENERS ---
+        const startBtn = document.getElementById('start-button');
+        startBtn.addEventListener('click', startGame);
+        startBtn.addEventListener('touchstart', startGame);
+        
+        document.addEventListener('pointerdown', (e) => {
+            const rect = joyZone.getBoundingClientRect();
+            const isInJoystick = e.clientX >= rect.left && e.clientX <= rect.right && 
+                                 e.clientY >= rect.top && e.clientY <= rect.bottom;
+            if (isInJoystick) return;
+
+            if(!gameActive && document.getElementById('message').style.display === 'block') {
+                resetGame();
+            } else if (gameActive) {
+                handleInput(e.clientX, e.clientY);
+            }
+        });
+
+        // Zoom
+        window.addEventListener('wheel', (e) => {
+            cameraDistance += e.deltaY * 0.001;
+            cameraDistance = Math.max(0.5, Math.min(2.5, cameraDistance));
+        });
+
+        let initialPinch = 0;
+        container.addEventListener('touchstart', (e) => {
+            if(e.touches.length === 2) initialPinch = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+        });
+        container.addEventListener('touchmove', (e) => {
+            if(e.touches.length === 2 && initialPinch > 0) {
+                const dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+                const delta = initialPinch - dist;
+                cameraDistance += delta * 0.005;
+                cameraDistance = Math.max(0.5, Math.min(2.5, cameraDistance));
+                initialPinch = dist;
+                e.preventDefault();
+            }
+        });
+
+        // --- VOICE PRELOAD ---
+        function loadVoices() {
+            if (!speechSynth) return;
+            const voices = speechSynth.getVoices();
+            gameVoice = voices.find(v => v.lang.includes('es')) || voices[0];
+        }
+        
+        if (speechSynth && speechSynth.onvoiceschanged !== undefined) {
+            speechSynth.onvoiceschanged = loadVoices;
+        }
+
+        function startGame(e) {
+            // 1. Hide UI Immediately
+            document.getElementById('start-overlay').style.display = 'none';
+            document.getElementById('name-tag').style.display = 'block';
+
+            // 2. Handle Event Defaults
+            if(e && e.cancelable) e.preventDefault();
+            
+            // 3. Safe Audio Init
+            try {
+                if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+                audioEnabled = true;
+
+                if (speechSynth) {
+                    speechSynth.cancel();
+                    const empty = new SpeechSynthesisUtterance("");
+                    speechSynth.speak(empty);
+                    loadVoices(); 
+                }
+            } catch (err) {
+                console.warn("Audio init error (ignored):", err);
+            }
+
+            gameActive = true;
+            resetGame();
+        }
+
+        function resetGame() {
+            gameActive = true;
+            score = 0;
+            spawnRate = CONFIG.spawnRateInitial;
+            dairySpeed = CONFIG.dairySpeedBase;
+            document.getElementById('score').innerText = score;
+            document.getElementById('message').style.display = 'none';
+            
+            enemies.forEach(e => scene.remove(e.mesh));
+            enemies.length = 0;
+            
+            beams.forEach(b => scene.remove(b.mesh));
+            beams.length = 0;
+            
+            estherGroup.position.set(0, 0, 0);
+        }
+
+        // --- AUDIO & SPEECH ---
+        function speakGameOver() {
+            if (speechSynth) {
+                speechSynth.cancel();
+                const utterance = new SpeechSynthesisUtterance("Esther se cagó");
+                if(gameVoice) utterance.voice = gameVoice;
+                utterance.lang = 'es-ES'; 
+                utterance.rate = 0.9; 
+                utterance.pitch = 0.8; 
+                utterance.volume = 1.0;
+                speechSynth.speak(utterance);
+            }
+        }
+
+        function playSound(type) {
+            if (!audioEnabled || !audioCtx) return;
+            try {
+                const now = audioCtx.currentTime;
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                if (type === 'zap') {
+                    osc.type = 'sine'; 
+                    osc.frequency.setValueAtTime(1200, now);
+                    osc.frequency.exponentialRampToValueAtTime(200, now + 0.15);
+                    gain.gain.setValueAtTime(0.1, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+                    osc.start();
+                    osc.stop(now + 0.15);
+                } else if (type === 'gameOver') { 
+                    // Just speak
+                    speakGameOver();
+                }
+            } catch(e) { console.warn("Audio error", e); }
+        }
+
+        // --- ASSETS ---
+        const materials = {
+            skin: new THREE.MeshStandardMaterial({ color: CONFIG.colors.skin }),
+            vest: new THREE.MeshStandardMaterial({ color: CONFIG.colors.vest, roughness: 1.0 }),
+            shirt: new THREE.MeshStandardMaterial({ color: CONFIG.colors.shirt }),
+            hair: new THREE.MeshStandardMaterial({ color: CONFIG.colors.hair }),
+            cheese: new THREE.MeshStandardMaterial({ color: CONFIG.colors.cheese }),
+            milk: new THREE.MeshStandardMaterial({ color: CONFIG.colors.milk }),
+            lanyard: new THREE.MeshStandardMaterial({ color: CONFIG.colors.lanyard }),
+            exit: new THREE.MeshBasicMaterial({ color: CONFIG.colors.exitGreen }),
+            mouth: new THREE.MeshStandardMaterial({ color: CONFIG.colors.mouth }),
+            eye: new THREE.MeshStandardMaterial({ color: 0x000000 }),
+            beam: new THREE.MeshBasicMaterial({ color: CONFIG.colors.beam, transparent: true, opacity: 0.8 }),
+            desk: new THREE.MeshStandardMaterial({ color: CONFIG.colors.desk, roughness: 0.8 }), // Some sheen
+            plant: new THREE.MeshStandardMaterial({ color: CONFIG.colors.plant }),
+            pot: new THREE.MeshStandardMaterial({ color: CONFIG.colors.pot }),
+            screenOff: new THREE.MeshStandardMaterial({ color: CONFIG.colors.screen }),
+            screenOn: new THREE.MeshBasicMaterial({ color: CONFIG.colors.screenOn, emissive: CONFIG.colors.screenOn, emissiveIntensity: 0.5 }) // Glow
+        };
+
+        // --- ESTHER BUILDER ---
+        const estherGroup = new THREE.Group();
+        const bodyParts = {};
+
+        function createEsther() {
+            // Legs
+            const legGeo = new THREE.BoxGeometry(0.35, 1.2, 0.4);
+            const legLGroup = new THREE.Group(); legLGroup.position.set(-0.25, 1.2, 0);
+            const legL = new THREE.Mesh(legGeo, new THREE.MeshStandardMaterial({color: 0x111111})); legL.position.y = -0.6;
+            legLGroup.add(legL); estherGroup.add(legLGroup); bodyParts.legL = legLGroup;
+
+            const legRGroup = new THREE.Group(); legRGroup.position.set(0.25, 1.2, 0);
+            const legR = new THREE.Mesh(legGeo, new THREE.MeshStandardMaterial({color: 0x111111})); legR.position.y = -0.6;
+            legRGroup.add(legR); estherGroup.add(legRGroup); bodyParts.legR = legRGroup;
+
+            // Torso
+            const torsoGroup = new THREE.Group(); torsoGroup.position.y = 1.2;
+            const shirtBase = new THREE.Mesh(new THREE.BoxGeometry(0.9, 1.2, 0.5), materials.shirt); shirtBase.position.y = 0.6; torsoGroup.add(shirtBase);
+            const vest = new THREE.Mesh(new THREE.BoxGeometry(1.0, 1.0, 0.55), materials.vest); vest.position.y = 0.5; vest.castShadow = true; torsoGroup.add(vest);
+            const collar = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.3, 0.52), materials.shirt); collar.position.set(0, 1.2, 0); torsoGroup.add(collar);
+            estherGroup.add(torsoGroup);
+
+            // Arms
+            const armGeo = new THREE.BoxGeometry(0.25, 0.9, 0.25);
+            const shoulderGeo = new THREE.SphereGeometry(0.28, 16, 16);
+            const shoulderL = new THREE.Mesh(shoulderGeo, materials.shirt); shoulderL.position.set(-0.65, 1.0, 0); torsoGroup.add(shoulderL);
+            const shoulderR = new THREE.Mesh(shoulderGeo, materials.shirt); shoulderR.position.set(0.65, 1.0, 0); torsoGroup.add(shoulderR);
+
+            const armRGroup = new THREE.Group(); armRGroup.position.set(0.65, 1.0, 0);
+            const armRMesh = new THREE.Mesh(armGeo, materials.shirt); armRMesh.position.y = -0.45; armRGroup.add(armRMesh);
+            const handR = new THREE.Mesh(new THREE.SphereGeometry(0.12), materials.skin); handR.position.y = -0.95; armRGroup.add(handR);
+            torsoGroup.add(armRGroup); bodyParts.armR = armRGroup;
+
+            const armLGroup = new THREE.Group(); armLGroup.position.set(-0.65, 1.0, 0);
+            const armLMesh = new THREE.Mesh(armGeo, materials.shirt); armLMesh.position.y = -0.45; armLGroup.add(armLMesh);
+            const handL = new THREE.Mesh(new THREE.SphereGeometry(0.12), materials.skin); handL.position.y = -0.95; armLGroup.add(handL);
+            torsoGroup.add(armLGroup); bodyParts.armL = armLGroup;
+            
+            armLGroup.rotation.z = 0.2; armRGroup.rotation.z = -0.2;
+
+            // Head
+            const headGroup = new THREE.Group(); headGroup.position.y = 2.55;
+            const headMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.55, 16), materials.skin); headGroup.add(headMesh);
+            const eyeL = new THREE.Mesh(new THREE.SphereGeometry(0.04, 8, 8), materials.eye); eyeL.position.set(-0.1, 0.15, 0.3); headGroup.add(eyeL);
+            const eyeR = eyeL.clone(); eyeR.position.set(0.1, 0.15, 0.3); headGroup.add(eyeR);
+            const mouth = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.05, 0.02), materials.mouth); mouth.position.set(0, -0.05, 0.3); mouth.rotation.x = -0.1; headGroup.add(mouth);
+            const hairMain = new THREE.Mesh(new THREE.BoxGeometry(0.65, 0.2, 0.7), materials.hair); hairMain.position.y = 0.3; headGroup.add(hairMain);
+            const bun = new THREE.Mesh(new THREE.SphereGeometry(0.25), materials.hair); bun.position.set(0, 0.3, -0.25); headGroup.add(bun);
+            estherGroup.add(headGroup);
+
+            // Lanyard
+            const lanyard = new THREE.Mesh(new THREE.TorusGeometry(0.55, 0.02, 4, 32, 3.5), materials.lanyard);
+            lanyard.position.set(0, 1.8, 0); lanyard.rotation.z = Math.PI; lanyard.scale.set(1, 2, 1); estherGroup.add(lanyard);
+            const badge = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.4, 0.02), new THREE.MeshBasicMaterial({color: 0xffffff}));
+            badge.position.set(0, 1.4, 0.3); badge.rotation.z = 0.1; estherGroup.add(badge);
+
+            estherGroup.castShadow = true;
+            scene.add(estherGroup);
+        }
+        createEsther();
+
+        // --- RICH OFFICE ENVIRONMENT ---
+        function createOffice() {
+            const floor = new THREE.Mesh(new THREE.PlaneGeometry(80, 80), new THREE.MeshStandardMaterial({ color: CONFIG.colors.floor, roughness: 0.5, metalness: 0.1 })); // Subtle sheen
+            floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; scene.add(floor);
+            
+            const backWall = new THREE.Mesh(new THREE.PlaneGeometry(60, 15), new THREE.MeshStandardMaterial({ color: CONFIG.colors.wall, roughness: 0.8 })); // Lighter with less shine
+            backWall.position.set(0, 7.5, -20); backWall.receiveShadow = true; scene.add(backWall);
+
+            const signGroup = new THREE.Group();
+            const signBox = new THREE.Mesh(new THREE.BoxGeometry(3, 1.5, 0.2), materials.exit); signGroup.add(signBox);
+            const arrow = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 0.8), new THREE.MeshBasicMaterial({color: 0xffffff})); arrow.position.z = 0.11; signGroup.add(arrow);
+            signGroup.position.set(-10, 10, -19.9); scene.add(signGroup);
+            
+            const deskGeo = new THREE.BoxGeometry(6, 0.2, 3);
+            const monGeo = new THREE.BoxGeometry(1.5, 1, 0.1);
+            const monStandGeo = new THREE.CylinderGeometry(0.1, 0.1, 0.5);
+            
+            const deskPositions = [[-12, -8], [12, -8], [-12, 5], [12, 5]];
+            
+            deskPositions.forEach(pos => {
+                const d = new THREE.Mesh(deskGeo, materials.desk); d.position.set(pos[0], 1.5, pos[1]); d.castShadow = true; scene.add(d);
+                const mStand = new THREE.Mesh(monStandGeo, materials.desk); mStand.position.set(pos[0], 1.8, pos[1]-0.5); scene.add(mStand);
+                const mScreen = new THREE.Mesh(monGeo, materials.screenOff); mScreen.position.set(pos[0], 2.3, pos[1]-0.5); scene.add(mScreen);
+                const mGlow = new THREE.Mesh(new THREE.PlaneGeometry(1.3, 0.8), materials.screenOn); mGlow.position.set(0, 0, 0.06); mScreen.add(mGlow);
+            });
+
+            const potGeo = new THREE.CylinderGeometry(0.8, 0.6, 1.2, 8);
+            const plantGeo = new THREE.DodecahedronGeometry(1.2);
+            [[-25, -15], [25, -15]].forEach(pos => {
+                const pot = new THREE.Mesh(potGeo, materials.pot); pot.position.set(pos[0], 0.6, pos[1]); scene.add(pot);
+                const leaves = new THREE.Mesh(plantGeo, materials.plant); leaves.position.set(pos[0], 2.0, pos[1]); scene.add(leaves);
+            });
+            
+            // Ceiling Lights
+            const lightGeo = new THREE.BoxGeometry(4, 0.2, 4);
+            const lightMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+            [[-12, -8], [12, -8], [-12, 5], [12, 5]].forEach(pos => {
+                const l = new THREE.Mesh(lightGeo, lightMat); l.position.set(pos[0], 14, pos[1]); scene.add(l);
+            });
+        }
+        createOffice();
+
+        // --- GAME LOGIC ---
+        function spawnEnemy() {
+            const angle = Math.random() * Math.PI * 2;
+            const radius = 25; 
+            const x = Math.cos(angle) * radius;
+            const z = Math.sin(angle) * radius;
+            let mesh;
+            if (Math.random() > 0.5) {
+                mesh = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 0.8, 0.3, 16), materials.cheese); mesh.rotation.x = Math.PI / 2;
+            } else {
+                mesh = new THREE.Mesh(new THREE.BoxGeometry(0.6, 1.2, 0.6), materials.milk);
+            }
+            mesh.position.set(x, 2 + Math.random()*1.5, z); mesh.castShadow = true; scene.add(mesh);
+            enemies.push({ mesh: mesh, speed: dairySpeed + (Math.random() * 0.02) });
+        }
+
+        function createExplosion(pos) {
+            const mat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+            for(let i=0; i<10; i++) {
+                const p = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.3, 0.3), mat); p.position.copy(pos);
+                const vel = new THREE.Vector3((Math.random()-0.5)*0.5, (Math.random()-0.5)*0.5, (Math.random()-0.5)*0.5);
+                scene.add(p); particles.push({ mesh: p, vel: vel, life: 1.0 });
+            }
+        }
+
+        function createBeam(start, end) {
+            const distance = start.distanceTo(end);
+            const geometry = new THREE.CylinderGeometry(0.1, 0.1, distance, 8);
+            geometry.rotateX(-Math.PI / 2); geometry.translate(0, 0, distance / 2);
+            const mesh = new THREE.Mesh(geometry, materials.beam);
+            mesh.position.copy(start); mesh.lookAt(end); scene.add(mesh);
+            beams.push({ mesh: mesh, life: 1.0 });
+        }
+
+        function handleInput(x, y) {
+            mouse.x = (x / window.innerWidth) * 2 - 1;
+            mouse.y = -(y / window.innerHeight) * 2 + 1;
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(scene.children);
+            for (let hit of intersects) {
+                const enemyIndex = enemies.findIndex(e => e.mesh === hit.object);
+                if (enemyIndex > -1) {
+                    const enemy = enemies[enemyIndex];
+                    const dx = enemy.mesh.position.x - estherGroup.position.x;
+                    const dz = enemy.mesh.position.z - estherGroup.position.z;
+                    estherGroup.rotation.y = Math.atan2(dx, dz);
+                    armAnimationState = 8; 
+                    const handOffset = new THREE.Vector3(0.65, 1.5, 0.5).applyAxisAngle(new THREE.Vector3(0,1,0), estherGroup.rotation.y);
+                    const startPos = estherGroup.position.clone().add(handOffset);
+                    createBeam(startPos, enemy.mesh.position);
+                    createExplosion(enemy.mesh.position);
+                    playSound('zap');
+                    scene.remove(enemy.mesh);
+                    enemies.splice(enemyIndex, 1);
+                    score += 100;
+                    document.getElementById('score').innerText = score;
+                    if(score % 500 === 0) { dairySpeed += 0.01; spawnRate = Math.max(15, spawnRate - 5); }
+                    break; 
+                }
+            }
+        }
+
+        // --- ANIMATION LOOP ---
+        const amb = new THREE.AmbientLight(0xffffff, 0.8); scene.add(amb); // Brighter Ambient
+        const dir = new THREE.DirectionalLight(0xffffff, 1.0); dir.position.set(10, 20, 10); dir.castShadow = true; 
+        dir.shadow.mapSize.width=1024; dir.shadow.mapSize.height=1024; scene.add(dir); 
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            if (gameActive) {
+                frameCount++;
+                if (frameCount % Math.floor(spawnRate) === 0) spawnEnemy();
+
+                let mx = 0, mz = 0;
+                if (isJoystickActive) { mx = joystickVector.x; mz = joystickVector.y; } 
+                else { if (keys.w) mz = -1; if (keys.s) mz = 1; if (keys.a) mx = -1; if (keys.d) mx = 1; }
+                const isMoving = (Math.abs(mx) > 0.1 || Math.abs(mz) > 0.1);
+                
+                if (isMoving) {
+                    estherGroup.position.x += mx * CONFIG.moveSpeed; estherGroup.position.z += mz * CONFIG.moveSpeed;
+                    estherGroup.rotation.y = Math.atan2(mx, mz);
+                    estherGroup.position.x = Math.max(-38, Math.min(38, estherGroup.position.x));
+                    estherGroup.position.z = Math.max(-38, Math.min(38, estherGroup.position.z));
+                    legAnimationTime += 0.3;
+                    bodyParts.legL.rotation.x = Math.sin(legAnimationTime) * 0.6; bodyParts.legR.rotation.x = Math.cos(legAnimationTime) * 0.6;
+                } else {
+                    bodyParts.legL.rotation.x = THREE.MathUtils.lerp(bodyParts.legL.rotation.x, 0, 0.2);
+                    bodyParts.legR.rotation.x = THREE.MathUtils.lerp(bodyParts.legR.rotation.x, 0, 0.2);
+                }
+
+                for (let i = enemies.length - 1; i >= 0; i--) {
+                    const e = enemies[i];
+                    const targetPos = estherGroup.position.clone().add(new THREE.Vector3(0, 1.5, 0));
+                    const direction = new THREE.Vector3().subVectors(targetPos, e.mesh.position).normalize();
+                    e.mesh.position.add(direction.multiplyScalar(e.speed));
+                    e.mesh.lookAt(targetPos); e.mesh.rotation.z += 0.1; 
+                    if (e.mesh.position.distanceTo(targetPos) < 1.2) {
+                        gameActive = false; playSound('gameOver');
+                        document.getElementById('message').style.display = 'block';
+                    }
+                }
+            }
+
+            const targetCamPos = estherGroup.position.clone().add(CONFIG.cameraDefaults.offset.clone().multiplyScalar(cameraDistance));
+            camera.position.lerp(targetCamPos, 0.08); camera.lookAt(estherGroup.position);
+
+            if (armAnimationState > 0) {
+                bodyParts.armR.rotation.x = THREE.MathUtils.lerp(bodyParts.armR.rotation.x, -Math.PI/2, 0.5); armAnimationState--;
+            } else { bodyParts.armR.rotation.x = THREE.MathUtils.lerp(bodyParts.armR.rotation.x, 0, 0.1); }
+
+            for (let i = beams.length - 1; i >= 0; i--) {
+                const b = beams[i]; b.life -= 0.1; b.mesh.material.opacity = b.life; b.mesh.scale.x = b.life; b.mesh.scale.y = b.life;
+                if(b.life <= 0) { scene.remove(b.mesh); beams.splice(i, 1); }
+            }
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i]; p.mesh.position.add(p.vel); p.life -= 0.05;
+                if(p.life <= 0) { scene.remove(p.mesh); particles.splice(i, 1); } else { p.mesh.scale.setScalar(p.life); }
+            }
+
+            const headPos = estherGroup.position.clone().add(new THREE.Vector3(0, 3.5, 0)); headPos.project(camera);
+            const x = (headPos.x * .5 + .5) * container.clientWidth; const y = (headPos.y * -.5 + .5) * container.clientHeight;
+            nameTag.style.left = `${x}px`; nameTag.style.top = `${y}px`;
+
+            renderer.render(scene, camera);
+        }
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        animate();
+
+    </script>
+</body>
+</html>
+
+
