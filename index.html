@@ -3,138 +3,147 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Esther: Arsenal Lácteo 🛡️💅</title>
+    <title>Esther: El Retorno del KPI 🛡️💅</title>
     <style>
         body { margin: 0; overflow: hidden; background-color: #050505; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; touch-action: none; user-select: none; -webkit-user-select: none; }
         #canvas-container { width: 100vw; height: 100vh; position: relative; overflow: hidden; }
         
+        /* UI Game Elements - Sophisticated Glassmorphism */
         #ui {
-            position: absolute;
-            top: 40px; left: 20px;
-            color: white; background: rgba(0, 0, 0, 0.85);
-            padding: 12px 20px; border-radius: 15px;
-            pointer-events: none; border: 2px solid #00b06f;
-            backdrop-filter: blur(15px); z-index: 100;
-            display: none; align-items: center; gap: 15px;
-            box-shadow: 0 0 30px rgba(0, 176, 111, 0.4);
+            position: absolute; top: 40px; left: 20px;
+            color: white; background: rgba(0, 0, 0, 0.6);
+            padding: 10px 18px; border-radius: 12px;
+            pointer-events: none; border: 1px solid rgba(0, 176, 111, 0.5);
+            backdrop-filter: blur(10px); z-index: 500;
+            display: none; align-items: center; gap: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
         }
-        .score-display { font-size: 1.8rem; color: #4fffa6; font-weight: 900; font-family: 'Courier New', monospace; }
+        .score-display { font-size: 1.5rem; color: #4fffa6; font-weight: 800; font-family: 'Courier New', monospace; }
         
         #weapon-selector {
-            position: absolute;
-            bottom: 30px; left: 50%;
+            position: absolute; bottom: 35px; left: 50%;
             transform: translateX(-50%);
-            display: none; gap: 10px;
-            background: rgba(0,0,0,0.9);
-            padding: 12px; border-radius: 25px;
-            border: 1px solid rgba(255,255,255,0.15);
-            z-index: 200; backdrop-filter: blur(10px);
-            box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+            display: none; gap: 8px;
+            background: rgba(0,0,0,0.7);
+            padding: 8px; border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.1);
+            z-index: 600; backdrop-filter: blur(8px);
         }
         .weapon-btn {
-            width: 50px; height: 50px;
-            border-radius: 12px; border: 2px solid rgba(255,255,255,0.1);
-            background: #222; color: white;
-            font-size: 1.4rem; display: flex; align-items: center; justify-content: center;
+            width: 48px; height: 48px;
+            border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(40,40,40,0.8); color: white;
+            font-size: 1.3rem; display: flex; align-items: center; justify-content: center;
             cursor: pointer; position: relative; overflow: hidden;
             transition: all 0.2s; -webkit-tap-highlight-color: transparent;
         }
         .weapon-btn.active {
-            border-color: #00b06f; background: #004422;
-            box-shadow: 0 0 15px #00b06f; transform: scale(1.1) translateY(-3px);
+            border-color: #00b06f; background: rgba(0, 68, 34, 0.8);
+            box-shadow: 0 0 12px #00b06f; transform: scale(1.1) translateY(-3px);
         }
-        .cooldown-overlay { position: absolute; bottom: 0; left: 0; width: 100%; height: 0%; background: rgba(255, 0, 255, 0.3); z-index: 1; pointer-events: none; }
+        .cooldown-overlay { position: absolute; bottom: 0; left: 0; width: 100%; height: 0%; background: rgba(255, 0, 255, 0.4); z-index: 1; pointer-events: none; }
 
-        /* STAR WARS INTRO STYLES - SLOWED DOWN */
+        /* INTRO LAYER */
         #intro-overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: #000; z-index: 1000;
+            background: #000; z-index: 2000;
             display: none; flex-direction: column; justify-content: center; align-items: center;
-            overflow: hidden; perspective: 400px;
+            overflow: hidden;
         }
         #starfield { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; }
+        
+        #crawl-perspective {
+            width: 90%; height: 100%; perspective: 350px;
+            display: flex; justify-content: center;
+        }
         #crawl-container {
-            position: relative; width: 85%; max-width: 700px;
-            color: #ffde11; font-size: 1.4rem; font-weight: 900;
+            position: relative; width: 100%; max-width: 650px;
+            color: #ffde11; font-size: 1.3rem; font-weight: 800;
             text-align: center; transform: rotateX(25deg);
-            animation: crawl 180s linear forwards; /* ULTRA SLOW 180s */
+            animation: crawl 260s linear forwards;
+            line-height: 1.8;
         }
         @keyframes crawl {
-            0% { top: 100vh; opacity: 1; }
-            95% { opacity: 1; }
-            100% { top: -4500px; opacity: 0; }
+            0% { top: 100vh; }
+            100% { top: -4500px; }
         }
         
-        #intro-ui {
+        #skip-layer {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 1500; pointer-events: none; display: none;
+            z-index: 3000; pointer-events: none; display: none;
         }
         #skip-intro {
-            position: absolute; bottom: 60px; right: 40px;
+            position: absolute; bottom: 45px; right: 25px;
             background: #00b06f; color: white;
-            border: 3px solid white; padding: 15px 25px; border-radius: 50px;
+            border: 2px solid white; padding: 12px 22px; border-radius: 50px;
             cursor: pointer; pointer-events: auto; font-weight: 900;
-            text-transform: uppercase; letter-spacing: 2px;
-            box-shadow: 0 10px 30px rgba(0,176,111,0.7);
+            text-transform: uppercase; letter-spacing: 1px;
+            font-size: 0.9rem; box-shadow: 0 10px 20px rgba(0,176,111,0.5);
             -webkit-tap-highlight-color: transparent;
-            font-size: 1.1rem;
         }
 
         #start-overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: radial-gradient(circle at center, #222 0%, #050505 100%);
+            background: radial-gradient(circle at center, #1a1a1a 0%, #000 100%);
             display: flex; flex-direction: column; justify-content: center; align-items: center;
-            color: white; z-index: 3000; text-align: center; padding: 20px; box-sizing: border-box;
+            color: white; z-index: 4000; text-align: center; padding: 20px; box-sizing: border-box;
         }
         .btn-start {
-            padding: 22px 50px; background: #00b06f; color: white;
-            font-size: 1.6rem; font-weight: 900; border: none; border-radius: 50px;
-            margin-top: 40px; cursor: pointer;
-            box-shadow: 0 10px 40px rgba(0,176,111,0.6);
-            text-transform: uppercase; letter-spacing: 3px;
+            padding: 22px 55px; background: #00b06f; color: white;
+            font-size: 1.5rem; font-weight: 900; border: none; border-radius: 50px;
+            margin-top: 30px; cursor: pointer;
+            box-shadow: 0 10px 35px rgba(0,176,111,0.5);
+            text-transform: uppercase; letter-spacing: 2px;
             -webkit-tap-highlight-color: transparent;
         }
         
         #message {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            background: rgba(20, 0, 0, 0.98); color: #ff3333; padding: 40px; border-radius: 30px;
-            text-align: center; display: none; border: 4px solid #ff3333;
-            z-index: 4000; pointer-events: auto; box-shadow: 0 0 120px rgba(255,0,0,0.7);
-            width: 85%; max-width: 450px; box-sizing: border-box; backdrop-filter: blur(10px);
+            background: rgba(15, 0, 0, 0.95); color: #ff3333; padding: 35px; border-radius: 25px;
+            text-align: center; display: none; border: 2px solid #ff3333;
+            z-index: 5000; pointer-events: auto; box-shadow: 0 0 100px rgba(255,0,0,0.6);
+            width: 85%; max-width: 420px; box-sizing: border-box; backdrop-filter: blur(12px);
         }
         .fart-text { font-size: 3.5rem; margin: 0; animation: shake 0.15s infinite; font-weight: 900; }
-        .subtitle { font-size: 1.8rem; color: #fff; margin-top: 20px; font-weight: 800; font-style: italic; }
+        .subtitle { font-size: 1.8rem; color: #fff; margin-top: 20px; font-weight: 700; font-style: italic; }
 
-        @keyframes shake { 0% { transform: translate(4px, 4px); } 50% { transform: translate(-4px, -4px); } 100% { transform: translate(4px, -4px); } }
+        @keyframes shake { 0% { transform: translate(3px, 3px); } 50% { transform: translate(-3px, -3px); } 100% { transform: translate(3px, -3px); } }
         
         #joystick-zone {
-            position: absolute;
-            bottom: 60px; left: 50px;
+            position: absolute; bottom: 45px; left: 45px;
             width: 110px; height: 110px;
-            background: rgba(255, 255, 255, 0.15);
-            border-radius: 50%; border: 3px solid rgba(255, 255, 255, 0.4);
-            z-index: 500; touch-action: none;
-            display: none;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%; border: 3px solid rgba(255, 255, 255, 0.2);
+            z-index: 700; touch-action: none; display: none;
         }
         #joystick-knob {
             width: 50px; height: 50px;
             background: #00b06f; border-radius: 50%;
             position: absolute; top: 50%; left: 50%;
             transform: translate(-50%, -50%);
-            pointer-events: none; box-shadow: 0 0 15px rgba(0,0,0,0.5);
+            pointer-events: none; box-shadow: 0 0 15px rgba(0,0,0,0.6);
         }
 
-        .controls-hint { position: absolute; bottom: 10px; width: 100%; text-align: center; color: rgba(255,255,255,0.25); pointer-events: none; font-size: 0.7rem; text-transform: uppercase; z-index: 5; }
+        #name-tag-label {
+            position: absolute; background: rgba(0,0,0,0.7);
+            color: #ffffff; padding: 4px 12px; border-radius: 8px;
+            font-size: 0.8rem; font-weight: 900; pointer-events: none;
+            transform: translate(-50%, -100%); z-index: 1000;
+            display: none; text-transform: uppercase; letter-spacing: 2px;
+            border: 1px solid #00ff88;
+        }
+
+        .controls-hint { position: absolute; bottom: 8px; width: 100%; text-align: center; color: rgba(255,255,255,0.2); pointer-events: none; font-size: 0.7rem; text-transform: uppercase; z-index: 5; }
     </style>
 </head>
 <body>
     <div id="canvas-container">
         <!-- Start Screen -->
         <div id="start-overlay">
-            <h1 style="font-size: 3rem; margin: 0; text-transform: uppercase; letter-spacing: 8px; color: #00b06f; font-weight: 900;">ESTHER</h1>
-            <h2 style="font-size: 1rem; font-weight: 300; letter-spacing: 4px; margin-bottom: 20px; color: #ff00ff;">ZONA EUROPA ULTIMATE SLAY ✨</h2>
-            <p style="font-size: 1rem; opacity: 0.8; max-width: 400px; line-height: 1.5;">
-                Thomas, el KPI está en peligro. <br>Ayuda a Esther a limpiar el stock lácteo. 💅
+            <h1 style="font-size: 3rem; margin: 0; text-transform: uppercase; letter-spacing: 12px; color: #00b06f; font-weight: 900;">ESTHER</h1>
+            <h2 style="font-size: 1rem; font-weight: 300; letter-spacing: 5px; margin-bottom: 30px; color: #ff00ff;">ZONA EUROPA EXECUTIVE REALNESS ✨</h2>
+            <p style="font-size: 1rem; opacity: 0.8; max-width: 400px; line-height: 1.6;">
+                Thomas, el margen operativo está en peligro. <br>¡La verdadera Esther ha vuelto al sistema! 💅
             </p>
             <button class="btn-start" id="start-button">CARGAR MISIÓN</button>
         </div>
@@ -142,30 +151,31 @@
         <!-- Star Wars Intro -->
         <div id="intro-overlay">
             <canvas id="starfield"></canvas>
-            <div id="crawl-container">
-                <p>Hace mucho tiempo en una instancia de Salesforce muy, muy lejana...</p>
-                <br>
-                <p>ESTHER: EL RETORNO DEL KPI</p>
-                <br>
-                <p>Cariño, escucha bien porque esto es una crisis de stock de nivel global. La Zona Europa ha sido invadida por lácteos que no sirven NADA de glamour.</p>
-                <br>
-                <p>Para moverte y servir look por la oficina, usa el joystick o las teclas W A S D. ¡Esa melena tiene que estar en constante movimiento!</p>
-                <br>
-                <p>Toca la pantalla para disparar. Tienes un arsenal de infarto: el Rayo Lactasa, la Granada de Gloss que hace daño en área, y el Vórtice Viral para cuando necesites una limpieza total cada 15 segundos.</p>
-                <br>
-                <p>Si los lácteos te tocan, el servidor se cae y... bueno, ya sabes: Esther se cagó. ¡No permitas que arruinen tu chaleco de punto! SLAY, CARIÑO, ¡SLAY!</p>
+            <div id="crawl-perspective">
+                <div id="crawl-container">
+                    <p>Hace mucho tiempo en una instancia de Salesforce muy, muy lejana...</p>
+                    <br>
+                    <p>ESTHER: EL RETORNO DEL KPI</p>
+                    <br>
+                    <p>Cariño, escucha bien porque esto es una crisis de stock de nivel global. La Zona Europa ha sido invadida por lácteos que no sirven NADA de glamour.</p>
+                    <br>
+                    <p>Para moverte y servir look por la oficina, usa el joystick o las teclas W A S D. ¡Esa melena tiene que estar en constante movimiento!</p>
+                    <br>
+                    <p>Toca la pantalla para disparar. Tienes un arsenal de infarto: el Rayo Lactasa, la Granada de Gloss que hace daño en área, y el Vórtice Viral para cuando necesites una limpieza total cada quince segundos.</p>
+                    <br>
+                    <p>Si los lácteos te tocan, el servidor se cae y... bueno, ya sabes: Esther se cagó. ¡No permitas que arruinen tu jersey mostaza! SLAY, CARIÑO, ¡SLAY!</p>
+                </div>
             </div>
         </div>
 
-        <!-- Dedicated Skip UI Layer -->
-        <div id="intro-ui">
+        <div id="skip-layer">
             <button id="skip-intro">SALTAR INTRO 💅</button>
         </div>
 
         <div id="ui">
-            <div style="width: 14px; height: 14px; background: #00ff88; border-radius: 50%; box-shadow: 0 0 15px #00ff88;"></div>
+            <div style="width: 15px; height: 15px; background: #00ff88; border-radius: 50%; box-shadow: 0 0 10px #00ff88;"></div>
             <div>
-                <div style="font-size: 0.7rem; opacity: 0.8; text-transform: uppercase; letter-spacing: 1px;">Ventas Protegidas</div>
+                <div style="font-size: 0.7rem; opacity: 0.8; text-transform: uppercase; letter-spacing: 1px;">KPIs Protegidos</div>
                 <div class="score-display" id="score">0</div>
             </div>
         </div>
@@ -181,479 +191,479 @@
             </div>
         </div>
 
-        <div id="name-tag">Esther</div>
+        <div id="name-tag-label">Esther</div>
         <div id="joystick-zone"><div id="joystick-knob"></div></div>
         
         <div id="message">
-            <h2 class="fart-text">¡PRRRT! 💨</h2>
+            <h2 class="fart-text">¡CAÍDA! 💀</h2>
             <div class="subtitle">"Esther se cagó"</div>
-            <p style="color: rgba(255,255,255,0.6); margin-top: 30px;">Toca para reiniciar</p>
+            <p style="color: rgba(255,255,255,0.7); margin-top: 15px; font-size: 1rem;">Toca para reiniciar producción</p>
         </div>
     </div>
-
-    <div class="controls-hint">Joystick • Toca para destruir • 💄 y 🌟 son AoE</div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
     <script>
-        // --- GLOBAL SELECTORS ---
-        const container = document.getElementById('canvas-container');
-        const scoreBox = document.getElementById('score');
-        const messageBox = document.getElementById('message');
-        const nameTag = document.getElementById('name-tag');
-        const joyZone = document.getElementById('joystick-zone');
-        const joyKnob = document.getElementById('joystick-knob');
-        const startBtn = document.getElementById('start-button');
-        const vortexOverlay = document.getElementById('vortex-cooldown');
-        const introOverlay = document.getElementById('intro-overlay');
-        const introUILayer = document.getElementById('intro-ui');
-        const skipBtn = document.getElementById('skip-intro');
-        const weaponSelector = document.getElementById('weapon-selector');
-        const uiOverlay = document.getElementById('ui');
+        // --- GLOBAL VARIABLES ---
+        let scene = new THREE.Scene();
+        let camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        let renderer = new THREE.WebGLRenderer({ antialias: true });
 
-        // --- CONFIG ---
-        const CONFIG = {
-            spawnRateInitial: 50,
-            dairySpeedBase: 0.07,
-            moveSpeed: 0.25,
-            cameraDefaults: { offset: new THREE.Vector3(0, 11, 16), minZoom: 0.4, maxZoom: 2.5 },
-            colors: {
-                bg: 0x050505, beam: 0x00ff88, skin: 0xdbb79c, shirt: 0xffffff, mouth: 0xb22222,
-                vortex: 0xff00ff, vortexInner: 0x00ffcc, gloss: 0xff0066, sparkle: 0xffccff
-            },
-            vortexCooldownTime: 15000 
-        };
-
-        // --- STATE ---
+        let container, scoreBox, messageBox, nameTagLabel, joyZone, joyKnob, startBtn, vortexOverlay, introOverlay, skipLayer, skipBtn, weaponSelector, uiOverlay;
+        let mats;
         let gameActive = false, score = 0, currentWeapon = 'laser', zoomLevel = 1.0;
         let enemies = [], particles = [], effects = [], joystick = { active: false, x: 0, y: 0 };
         const keys = { w:0, a:0, s:0, d:0 };
         let armAnimationState = 0, legAnimationTime = 0, frameCount = 0;
-        let lastVortexTime = 0;
+        let lastVortexTime = 0, initialPinchDist = 0;
+        let esther = new THREE.Group();
+        const bodyParts = {};
+        const furniturePhysics = []; // For collisions
+
+        // --- CONFIG ---
+        const CONFIG = {
+            moveSpeed: 0.28,
+            cameraDefaults: { offset: new THREE.Vector3(0, 11, 16), minZoom: 0.3, maxZoom: 3.5 },
+            colors: {
+                bg: 0x050505, beam: 0x00ff88, skin: 0xdabfa6, 
+                mustard: 0xca8c2a, 
+                mouth: 0xb22222,
+                hair: 0x221a15,
+                eyeshadow: 0x5a4d41, // Elegant subtle shadow
+                blush: 0xffb2b2      // Soft pink blush
+            },
+            vortexCooldownTime: 15000 
+        };
 
         // Audio Management
-        let audioCtx = null, audioEnabled = false, speechSynth = window.speechSynthesis, gameVoice = null;
-
         const audio = {
-            init() {
-                if (audioCtx) return;
-                try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) {}
-            },
+            ctx: null,
+            init() { if (this.ctx) return; try { this.ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) {} },
             playSound(type) {
-                if(!audioEnabled || !audioCtx) return;
-                const now = audioCtx.currentTime;
-                const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
-                osc.connect(gain); gain.connect(audioCtx.destination);
+                if(!gameActive || !this.ctx) return;
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator(), gain = this.ctx.createGain();
+                osc.connect(gain); gain.connect(this.ctx.destination);
                 if(type==='laser') { osc.type='sine'; osc.frequency.setValueAtTime(1200, now); osc.frequency.exponentialRampToValueAtTime(100, now+0.1); gain.gain.setValueAtTime(0.05, now); }
                 else if(type==='gloss') { osc.type='square'; osc.frequency.setValueAtTime(400, now); gain.gain.setValueAtTime(0.03, now); }
-                else if(type==='data') { osc.type='triangle'; osc.frequency.setValueAtTime(1500, now); gain.gain.setValueAtTime(0.02, now); }
-                else if(type==='vortex') { 
-                    osc.type='sawtooth'; osc.frequency.setValueAtTime(100, now); osc.frequency.exponentialRampToValueAtTime(1200, now + 0.3);
-                    gain.gain.setValueAtTime(0.08, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
-                }
-                else if(type==='explosion') {
-                    osc.type='sawtooth'; osc.frequency.setValueAtTime(80, now); osc.frequency.linearRampToValueAtTime(10, now + 0.2);
-                    gain.gain.setValueAtTime(0.1, now); gain.gain.linearRampToValueAtTime(0, now + 0.2);
-                }
+                else if(type==='vortex') { osc.type='sawtooth'; osc.frequency.setValueAtTime(100, now); osc.frequency.exponentialRampToValueAtTime(1200, now + 0.3); gain.gain.setValueAtTime(0.08, now); }
+                else if(type==='explosion') { osc.type='sawtooth'; osc.frequency.setValueAtTime(80, now); gain.gain.setValueAtTime(0.1, now); }
                 osc.start(); osc.stop(now+0.4);
             },
             speak(text, callback) {
-                if(speechSynth) {
-                    speechSynth.cancel();
+                if(window.speechSynthesis) {
+                    window.speechSynthesis.cancel();
                     const u = new SpeechSynthesisUtterance(text);
-                    u.lang = 'es-ES'; u.rate = 0.90; u.pitch = 0.95;
-                    const vs = speechSynth.getVoices();
+                    u.lang = 'es-ES'; u.rate = 0.95; u.pitch = 1.0;
+                    const vs = window.speechSynthesis.getVoices();
                     u.voice = vs.find(v => v.lang.includes('es-ES') && (v.name.includes('Helena') || v.name.includes('Lucia'))) || vs.find(v => v.lang.includes('es')) || vs[0];
                     if (callback) u.onend = callback;
-                    speechSynth.speak(u);
+                    window.speechSynthesis.speak(u);
                 }
             }
         };
 
         // --- TEXTURE STUDIO ---
         const TextureStudio = {
-            generateCheese() {
-                const c = document.createElement('canvas'); c.width = 256; c.height = 256;
+            generateKnit(colorHex) {
+                const c = document.createElement('canvas'); c.width = 64; c.height = 64;
                 const ctx = c.getContext('2d');
-                ctx.fillStyle = '#ffd500'; ctx.fillRect(0,0,256,256);
-                for(let i=0; i<60; i++) {
-                    const x = Math.random()*256, y = Math.random()*256, r = 7 + Math.random()*15;
-                    ctx.save();
-                    ctx.fillStyle = '#5a3d00'; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI*2); ctx.fill();
-                    ctx.strokeStyle = '#fff4a3'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI*2); ctx.stroke();
-                    ctx.restore();
-                }
+                ctx.fillStyle = colorHex; ctx.fillRect(0,0,64,64);
+                ctx.strokeStyle = 'rgba(0,0,0,0.1)';
+                for(let i=0; i<64; i+=4) { ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,64); ctx.stroke(); }
                 return new THREE.CanvasTexture(c);
             },
             generateMarble() {
                 const c = document.createElement('canvas'); c.width = 512; c.height = 512;
                 const ctx = c.getContext('2d');
-                ctx.fillStyle = '#0a0a0a'; ctx.fillRect(0,0,512,512);
-                ctx.strokeStyle = 'rgba(255,255,255,0.08)'; ctx.lineWidth = 1;
-                for(let i=0; i<100; i++) {
-                    ctx.beginPath(); ctx.moveTo(Math.random()*512, Math.random()*512); ctx.lineTo(Math.random()*512, Math.random()*512); ctx.stroke();
-                }
+                ctx.fillStyle = '#080808'; ctx.fillRect(0,0,512,512);
+                ctx.strokeStyle = 'rgba(255,255,255,0.06)'; ctx.lineWidth = 1;
+                for(let i=0; i<100; i++) { ctx.beginPath(); ctx.moveTo(Math.random()*512, Math.random()*512); ctx.lineTo(Math.random()*512, Math.random()*512); ctx.stroke(); }
                 const tex = new THREE.CanvasTexture(c); tex.wrapS = tex.wrapT = THREE.RepeatWrapping; return tex;
             },
-            generateKnit(color) {
-                const c = document.createElement('canvas'); c.width = 64; c.height = 64;
+            generateCheese() {
+                const c = document.createElement('canvas'); c.width = 256; c.height = 256;
                 const ctx = c.getContext('2d');
-                ctx.fillStyle = color; ctx.fillRect(0,0,64,64);
-                ctx.strokeStyle = 'rgba(255,255,255,0.1)';
-                for(let i=0; i<64; i+=4) { ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,64); ctx.stroke(); }
+                ctx.fillStyle = '#ffd500'; ctx.fillRect(0,0,256,256);
+                for(let i=0; i<80; i++) {
+                    const x = Math.random()*256, y = Math.random()*256, r = 6 + Math.random()*14;
+                    ctx.save(); ctx.fillStyle = '#4a3b00'; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI*2); ctx.fill();
+                    ctx.strokeStyle = '#fff4a3'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI*2); ctx.stroke(); ctx.restore();
+                }
+                return new THREE.CanvasTexture(c);
+            },
+            generateMilk() {
+                const c = document.createElement('canvas'); c.width = 256; c.height = 512;
+                const ctx = c.getContext('2d');
+                ctx.fillStyle = '#ffffff'; ctx.fillRect(0,0,256,512);
+                ctx.fillStyle = '#0055ff'; ctx.fillRect(0,100,256,60); 
+                ctx.fillStyle = '#111'; ctx.font = "bold 44px Arial"; ctx.textAlign = "center"; ctx.fillText("MILK", 128, 300);
+                ctx.font = "bold 20px Arial"; ctx.fillText("L'Oréal E-Com", 128, 350);
                 return new THREE.CanvasTexture(c);
             }
         };
 
-        const mats = {
-            skin: new THREE.MeshStandardMaterial({ color: CONFIG.colors.skin, roughness: 0.35 }),
-            vest: new THREE.MeshStandardMaterial({ map: TextureStudio.generateKnit('#111'), roughness: 1.0 }),
-            shirt: new THREE.MeshStandardMaterial({ map: TextureStudio.generateKnit('#fff'), roughness: 0.8 }),
-            hair: new THREE.MeshStandardMaterial({ color: 0x050505, roughness: 0.5 }),
-            floor: new THREE.MeshStandardMaterial({ map: TextureStudio.generateMarble(), roughness: 0.1, metalness: 0.4 }),
-            wall: new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.9 }),
-            desk: new THREE.MeshStandardMaterial({ color: 0x2b1d14, roughness: 0.6 }),
-            cheese: new THREE.MeshStandardMaterial({ map: TextureStudio.generateCheese(), roughness: 0.4 }),
-            milk: new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.1 }),
-            beam: new THREE.MeshBasicMaterial({ color: CONFIG.colors.beam, transparent: true, opacity: 0.8 }),
-            gloss: new THREE.MeshStandardMaterial({ color: CONFIG.colors.gloss, metalness: 0.9, roughness: 0.1 }),
-            sparkle: new THREE.MeshBasicMaterial({ color: CONFIG.colors.sparkle, transparent: true, opacity: 0.9 }),
-            vortex: new THREE.MeshBasicMaterial({ color: CONFIG.colors.vortex, transparent: true, opacity: 0.5, side: THREE.DoubleSide })
-        };
+        // --- CORE FUNCTIONS ---
+        function initGlobalSelectors() {
+            container = document.getElementById('canvas-container');
+            scoreBox = document.getElementById('score');
+            messageBox = document.getElementById('message');
+            nameTagLabel = document.getElementById('name-tag-label');
+            joyZone = document.getElementById('joystick-zone');
+            joyKnob = document.getElementById('joystick-knob');
+            startBtn = document.getElementById('start-button');
+            vortexOverlay = document.getElementById('vortex-cooldown');
+            introOverlay = document.getElementById('intro-overlay');
+            skipLayer = document.getElementById('skip-layer');
+            skipBtn = document.getElementById('skip-intro');
+            weaponSelector = document.getElementById('weapon-selector');
+            uiOverlay = document.getElementById('ui');
+        }
 
-        // --- THREE.JS SCENE SETUP ---
-        const scene = new THREE.Scene();
-        scene.background = new THREE.Color(CONFIG.colors.bg);
-        scene.fog = new THREE.FogExp2(CONFIG.colors.bg, 0.015);
+        function initMaterials() {
+            mats = {
+                skin: new THREE.MeshStandardMaterial({ color: CONFIG.colors.skin, roughness: 0.35 }),
+                sweater: new THREE.MeshStandardMaterial({ map: TextureStudio.generateKnit('#ca8c2a'), roughness: 0.85 }),
+                floor: new THREE.MeshStandardMaterial({ map: TextureStudio.generateMarble(), roughness: 0.1, metalness: 0.4 }),
+                cheese: new THREE.MeshStandardMaterial({ map: TextureStudio.generateCheese(), roughness: 0.4 }),
+                milk: new THREE.MeshStandardMaterial({ map: TextureStudio.generateMilk(), roughness: 0.15 }),
+                beam: new THREE.MeshBasicMaterial({ color: CONFIG.colors.beam, transparent: true, opacity: 0.8 }),
+                gloss: new THREE.MeshStandardMaterial({ color: CONFIG.colors.gloss, metalness: 0.9, roughness: 0.1 }),
+                vortex: new THREE.MeshBasicMaterial({ color: CONFIG.colors.vortex, transparent: true, opacity: 0.5, side: THREE.DoubleSide })
+            };
+        }
 
-        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer({ antialias: true });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.shadowMap.enabled = true;
-        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-        container.appendChild(renderer.domElement);
-
-        // --- ESTHER BUILDER ---
-        const esther = new THREE.Group();
-        const parts = {};
         function buildEsther() {
-            const legGeo = new THREE.BoxGeometry(0.38, 1.4, 0.4);
-            const lLeg = new THREE.Group(); lLeg.position.set(-0.25, 1.4, 0);
-            const lLegM = new THREE.Mesh(legGeo, new THREE.MeshStandardMaterial({color:0x000, roughness:0.2})); lLegM.position.y = -0.7; lLeg.add(lLegM);
-            esther.add(lLeg); parts.legL = lLeg;
-            const rLeg = new THREE.Group(); rLeg.position.set(0.25, 1.4, 0);
-            const rLegM = new THREE.Mesh(legGeo, new THREE.MeshStandardMaterial({color:0x000, roughness:0.2})); rLegM.position.y = -0.7; rLeg.add(rLegM);
-            esther.add(rLeg); parts.legR = rLeg;
+            esther.clear();
+            const legGeo = new THREE.BoxGeometry(0.32, 1.4, 0.32);
+            const lLeg = new THREE.Group(); lLeg.position.set(-0.2, 1.4, 0);
+            const lLegM = new THREE.Mesh(legGeo, new THREE.MeshStandardMaterial({color:0x000})); lLegM.position.y = -0.7; lLeg.add(lLegM);
+            esther.add(lLeg); bodyParts.legL = lLeg;
+            const rLeg = new THREE.Group(); rLeg.position.set(0.2, 1.4, 0);
+            const rLegM = new THREE.Mesh(legGeo, new THREE.MeshStandardMaterial({color:0x000})); rLegM.position.y = -0.7; rLeg.add(rLegM);
+            esther.add(rLeg); bodyParts.legR = rLeg;
+
             const torso = new THREE.Group(); torso.position.y = 1.4;
-            const body = new THREE.Mesh(new THREE.BoxGeometry(0.9, 1.3, 0.55), mats.shirt); body.position.y = 0.65; torso.add(body);
-            const vest = new THREE.Mesh(new THREE.BoxGeometry(1.05, 1.1, 0.6), mats.vest); vest.position.y = 0.55; torso.add(vest);
-            const puffGeo = new THREE.SphereGeometry(0.4, 16, 16);
-            const puffL = new THREE.Mesh(puffGeo, mats.shirt); puffL.position.set(-0.6, 1.1, 0); torso.add(puffL);
-            const puffR = new THREE.Mesh(puffGeo, mats.shirt); puffR.position.set(0.6, 1.1, 0); torso.add(puffR);
+            const body = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.45, 1.4, 16), mats.sweater); body.position.y = 0.7; torso.add(body);
+            const btnGeo = new THREE.CylinderGeometry(0.06, 0.06, 0.02, 16);
+            for(let i=0; i<3; i++) {
+                const btn = new THREE.Mesh(btnGeo, new THREE.MeshStandardMaterial({color:0x222}));
+                btn.position.set(0, 1.1 - (i*0.25), 0.38); btn.rotation.x = Math.PI/2; torso.add(btn);
+            }
+            const puffGeo = new THREE.SphereGeometry(0.38, 16, 16);
+            const puffL = new THREE.Mesh(puffGeo, mats.sweater); puffL.position.set(-0.55, 1.1, 0); torso.add(puffL);
+            const puffR = new THREE.Mesh(puffGeo, mats.sweater); puffR.position.set(0.55, 1.1, 0); torso.add(puffR);
+
+            const rArmGroup = new THREE.Group(); rArmGroup.position.set(0.6, 1.1, 0);
+            const rArmM = new THREE.Mesh(new THREE.BoxGeometry(0.24, 1, 0.24), mats.sweater); rArmM.position.y = -0.5; rArmGroup.add(rArmM);
+            const rHand = new THREE.Mesh(new THREE.SphereGeometry(0.12), mats.skin); rHand.position.y = -1.0; rArmGroup.add(rHand);
+            torso.add(rArmGroup); bodyParts.armR = rArmGroup;
+
+            const lArmGroup = new THREE.Group(); lArmGroup.position.set(-0.6, 1.1, 0);
+            const lArmM = new THREE.Mesh(new THREE.BoxGeometry(0.24, 1, 0.24), mats.sweater); lArmM.position.y = -0.5; lArmGroup.add(lArmM);
+            const lHand = new THREE.Mesh(new THREE.SphereGeometry(0.12), mats.skin); lHand.position.y = -1.0; lArmGroup.add(lHand);
+            torso.add(lArmGroup); bodyParts.armL = lArmGroup;
             esther.add(torso);
-            const armGeo = new THREE.BoxGeometry(0.28, 1.0, 0.28);
-            const rArm = new THREE.Group(); rArm.position.set(0.6, 1.1, 0);
-            const rArmM = new THREE.Mesh(armGeo, mats.shirt); rArmM.position.y = -0.5; rArm.add(rArmM);
-            const rHand = new THREE.Mesh(new THREE.SphereGeometry(0.12), mats.skin); rHand.position.y = -1.0; rArm.add(rHand);
-            torso.add(rArm); parts.armR = rArm;
-            const lArm = new THREE.Group(); lArm.position.set(-0.6, 1.1, 0);
-            const lArmM = new THREE.Mesh(armGeo, mats.shirt); lArmM.position.y = -0.5; lArm.add(lArmM);
-            const lHand = new THREE.Mesh(new THREE.SphereGeometry(0.12), mats.skin); lHand.position.y = -1.0; lArm.add(lHand);
-            torso.add(lArm); parts.armL = lArm;
+
+            // HEAD & FACE (Makeup fix!)
             const head = new THREE.Group(); head.position.y = 2.8;
-            const skull = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.32, 0.6, 24), mats.skin); head.add(skull);
+            const skull = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.6, 24), mats.skin); head.add(skull);
             const eyeGeo = new THREE.SphereGeometry(0.045, 8, 8);
-            const eyeL = new THREE.Mesh(eyeGeo, new THREE.MeshBasicMaterial({color:0x000})); eyeL.position.set(-0.11, 0.15, 0.3); head.add(eyeL);
-            const eyeR = eyeL.clone(); eyeR.position.set(0.11, 0.15, 0.3); head.add(eyeR);
-            const mouth = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.07, 0.02), new THREE.MeshBasicMaterial({color:CONFIG.colors.mouth})); mouth.position.set(0, -0.1, 0.31); head.add(mouth);
-            const bun = new THREE.Mesh(new THREE.SphereGeometry(0.32), mats.hair); bun.position.set(0, 0.3, -0.25); head.add(bun);
+            const eyeL = new THREE.Mesh(eyeGeo, new THREE.MeshBasicMaterial({color:0x000})); eyeL.position.set(-0.11, 0.15, 0.31); head.add(eyeL);
+            const eyeR = eyeL.clone(); eyeR.position.set(0.11, 0.15, 0.31); head.add(eyeR);
+            
+            // Subtle Eyeshadow (Makeup)
+            const shadowGeo = new THREE.PlaneGeometry(0.14, 0.05);
+            const shadowMat = new THREE.MeshBasicMaterial({color: CONFIG.colors.eyeshadow, transparent: true, opacity: 0.5});
+            const shadowL = new THREE.Mesh(shadowGeo, shadowMat); shadowL.position.set(-0.11, 0.21, 0.32); head.add(shadowL);
+            const shadowR = shadowL.clone(); shadowR.position.set(0.11, 0.21, 0.32); head.add(shadowR);
+
+            // Blush (Makeup)
+            const blushGeo = new THREE.CircleGeometry(0.06, 16);
+            const blushMat = new THREE.MeshBasicMaterial({color: CONFIG.colors.blush, transparent: true, opacity: 0.4});
+            const blushL = new THREE.Mesh(blushGeo, blushMat); blushL.position.set(-0.18, 0, 0.32); head.add(blushL);
+            const blushR = blushL.clone(); blushR.position.set(0.18, 0, 0.32); head.add(blushR);
+
+            const mouth = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.06, 0.02), new THREE.MeshBasicMaterial({color:CONFIG.colors.mouth})); mouth.position.set(0, -0.1, 0.32); head.add(mouth);
+            const bun = new THREE.Mesh(new THREE.SphereGeometry(0.32), new THREE.MeshStandardMaterial({color:CONFIG.colors.hair})); bun.position.set(0, 0.3, -0.2); head.add(bun);
             esther.add(head);
-            const lanyard = new THREE.Mesh(new THREE.TorusGeometry(0.55, 0.02, 4, 32, 3.5), new THREE.MeshBasicMaterial({color:0x111})); lanyard.position.set(0,1.95,0.08); lanyard.rotation.z=Math.PI; lanyard.scale.set(1,2,1); esther.add(lanyard);
-            const badge = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.42, 0.02), mats.shirt); badge.position.set(0.1, 1.4, 0.38); badge.rotation.z=0.1; esther.add(badge);
+
+            // Lanyard
+            const lanyard = new THREE.Mesh(new THREE.TorusGeometry(0.55, 0.02, 4, 32, 3.8), new THREE.MeshStandardMaterial({color:0x111})); lanyard.position.set(0,1.95,0.08); lanyard.rotation.z=Math.PI; lanyard.scale.set(1,2.1,1); esther.add(lanyard);
+            const badge = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.42, 0.03), new THREE.MeshStandardMaterial({color:0xffffff})); badge.position.set(0.15, 1.4, 0.42); badge.rotation.z=0.1; esther.add(badge);
+
             esther.traverse(o => { if(o.isMesh) o.castShadow = true; });
             scene.add(esther);
         }
-        buildEsther();
 
         function buildOffice() {
             const floor = new THREE.Mesh(new THREE.PlaneGeometry(120, 120), mats.floor); floor.rotation.x = -Math.PI/2; floor.receiveShadow = true; scene.add(floor);
-            const backWall = new THREE.Mesh(new THREE.PlaneGeometry(120, 40), mats.wall); backWall.position.set(0, 15, -45); scene.add(backWall);
             const deskPositions = [[-20,-15], [20,-15], [-20,15], [20,15], [0, -30]];
             deskPositions.forEach(p => {
-                const d = new THREE.Mesh(new THREE.BoxGeometry(11, 0.25, 5), mats.desk); d.position.set(p[0], 1.6, p[1]); d.castShadow = true; scene.add(d);
-                const screen = new THREE.Mesh(new THREE.PlaneGeometry(3.0, 1.9), new THREE.MeshBasicMaterial({color:0x00aaff, emissive: 0x00aaff, emissiveIntensity: 0.5})); screen.position.set(p[0], 3.3, p[1]-1.75); scene.add(screen);
+                const d = new THREE.Mesh(new THREE.BoxGeometry(11, 1.5, 5), new THREE.MeshStandardMaterial({color:0x2b1d14, roughness:0.6})); d.position.set(p[0], 0.75, p[1]); d.castShadow = true; scene.add(d);
+                furniturePhysics.push(new THREE.Box3().setFromObject(d));
+                const screen = new THREE.Mesh(new THREE.PlaneGeometry(3.0, 1.9), new THREE.MeshBasicMaterial({color:0x00aaff, emissive: 0x00aaff, emissiveIntensity: 0.5})); screen.position.set(p[0], 2.5, p[1]-1.75); scene.add(screen);
             });
         }
-        buildOffice();
 
-        // --- PARTICLE HELPERS ---
-        function triggerExplosion(pos, color=0xffffff, isBig=false) {
-            const count = isBig ? 50 : 25;
-            const radius = isBig ? 12 : 0; 
-            audio.playSound('explosion');
-            for(let i=0; i<count; i++) {
-                const p = new THREE.Mesh(new THREE.BoxGeometry(0.35,0.35,0.35), new THREE.MeshBasicMaterial({color, transparent:true}));
-                p.position.copy(pos);
-                particles.push({ mesh: p, vel: new THREE.Vector3((Math.random()-0.5)*(isBig?2.5:1.5), (Math.random()-0.5)*(isBig?2.5:1.5), (Math.random()-0.5)*(isBig?2.5:1.5)), life: 1.0 });
-                scene.add(p);
-            }
-            if(isBig) {
-                audio.playSound('vortex');
-                for(let i = enemies.length-1; i >= 0; i--) { if(enemies[i].mesh.position.distanceTo(pos) < radius) enemies[i].destroy(); }
-                const ringGeo = new THREE.TorusGeometry(1, 0.2, 16, 64);
-                const ring = new THREE.Mesh(ringGeo, new THREE.MeshBasicMaterial({color: 0xff00ff, transparent:true, opacity:0.6}));
-                ring.rotation.x = Math.PI/2; ring.position.copy(pos); scene.add(ring);
-                effects.push({ mesh: ring, life: 1.0, type: 'vortex_ring', speed: 2.5 });
-            }
-        }
-
-        function spawnSparkle(pos) {
-            const p = new THREE.Mesh(new THREE.SphereGeometry(0.15), mats.sparkle);
-            p.position.copy(pos);
-            particles.push({ mesh: p, vel: new THREE.Vector3((Math.random()-0.5)*0.2, (Math.random()-0.5)*0.2, (Math.random()-0.5)*0.2), life: 0.6 });
-            scene.add(p);
-        }
-
-        // --- GAMEPLAY FUNCTIONS ---
         function spawnEnemy() {
-            const angle = Math.random()*Math.PI*2, radius = 55;
+            const types = ['cheese', 'milk'];
+            const type = types[Math.floor(Math.random() * types.length)];
+            const angle = Math.random()*Math.PI*2, radius = 40; 
             const x = Math.cos(angle)*radius, z = Math.sin(angle)*radius;
-            let mesh;
-            if (Math.random() > 0.4) { mesh = new THREE.Mesh(new THREE.CylinderGeometry(1.4, 1.4, 0.8, 16), mats.cheese); mesh.rotation.x = Math.PI/2; }
-            else { mesh = new THREE.Mesh(new THREE.BoxGeometry(1.2, 2.2, 1.2), mats.milk); const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.35, 0.3), new THREE.MeshBasicMaterial({color:0xff0000})); cap.position.y = 1.25; mesh.add(cap); }
-            mesh.position.set(x, 25, z); mesh.castShadow = true; scene.add(mesh);
-            const enemy = { mesh, speed: CONFIG.dairySpeedBase + Math.random()*0.03, dropping: true, dropProgress: 0, targetY: 2,
+            let group = new THREE.Group();
+            if (type === 'cheese') {
+                const wheel = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.2, 0.6, 24), mats.cheese); 
+                // Face up logic: No X rotation,standing on flat side
+                group.add(wheel);
+            } else {
+                const box = new THREE.Mesh(new THREE.BoxGeometry(1, 2.2, 1), mats.milk); 
+                const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.2), new THREE.MeshBasicMaterial({color: 0x0055ff}));
+                cap.position.y = 1.15; box.add(cap);
+                group.add(box);
+            }
+            group.position.set(x, 25, z); group.castShadow = true; scene.add(group);
+            const enemy = { 
+                mesh: group, speed: 0.12 + Math.random()*0.06, dropping: true, dropProgress: 0, targetY: 0.7, markForDeletion: false,
                 destroy() {
-                    const idx = enemies.indexOf(this);
-                    if(idx > -1) {
-                        triggerExplosion(this.mesh.position, currentWeapon==='vortex'? 0xff00ff : (currentWeapon==='gloss'? 0xff00cc : 0xffffff));
-                        scene.remove(this.mesh); enemies.splice(idx, 1);
-                        score += 100; scoreBox.innerText = score;
-                    }
+                    this.markForDeletion = true;
+                    triggerExplosion(this.mesh.position, currentWeapon==='vortex'? 0xff00ff : (currentWeapon==='gloss'? 0xff00cc : 0xffffff), true);
+                    scene.remove(this.mesh); score += 100; scoreBox.innerText = score;
                 }
             };
             enemies.push(enemy);
         }
 
+        function triggerExplosion(pos, color=0xffffff, isBig=false) {
+            const count = isBig ? 45 : 15; audio.playSound('explosion');
+            for(let i=0; i<count; i++) {
+                const p = new THREE.Mesh(new THREE.BoxGeometry(0.35,0.35,0.35), new THREE.MeshBasicMaterial({color, transparent:true}));
+                p.position.copy(pos);
+                particles.push({ mesh: p, vel: new THREE.Vector3((Math.random()-0.5)*(isBig?2.5:1.2), (Math.random()-0.5)*(isBig?2.5:1.2), (Math.random()-0.5)*(isBig?2.5:1.2)), life: 1.0 });
+                scene.add(p);
+            }
+        }
+
         function fireWeapon(targetPos) {
             const now = Date.now();
-            if (currentWeapon === 'vortex' && now - lastVortexTime < CONFIG.vortexCooldownTime) return;
+            if (currentWeapon === 'vortex' && now - lastVortexTime < 15000) return;
             if (currentWeapon === 'vortex') lastVortexTime = now;
             const startPos = esther.position.clone().add(new THREE.Vector3(0.75, 1.7, 0.2).applyAxisAngle(new THREE.Vector3(0,1,0), esther.rotation.y));
-            audio.playSound(currentWeapon);
+            audio.init(); audio.playSound(currentWeapon);
+            armAnimationState = 15;
             if(currentWeapon==='laser') {
                 const dist = startPos.distanceTo(targetPos);
-                const geo = new THREE.CylinderGeometry(0.18, 0.04, dist, 12); geo.rotateX(-Math.PI/2); geo.translate(0,0,dist/2);
-                const b = new THREE.Mesh(geo, mats.beam); b.position.copy(startPos); b.lookAt(targetPos); scene.add(b);
-                effects.push({ mesh: b, life: 1.0, type: 'beam' });
+                const b = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, dist, 12), mats.beam);
+                b.position.copy(startPos); b.lookAt(targetPos); b.rotateX(Math.PI/2); b.translateY(dist/2);
+                scene.add(b); effects.push({ mesh: b, life: 1.0, type: 'beam' });
+                triggerExplosion(targetPos, 0x00ff88, false);
             } else if(currentWeapon==='gloss') {
-                const group = new THREE.Group();
-                const tube = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.7), new THREE.MeshStandardMaterial({color:0x333, metalness:0.8}));
-                const tip = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.25), mats.gloss); tip.position.y = 0.45; tube.add(tip); group.add(tube);
-                group.position.copy(startPos); scene.add(group);
-                effects.push({ mesh: group, life: 1.2, type: 'gloss_grenade', vel: targetPos.clone().sub(startPos).normalize().multiplyScalar(1.2), gravity: 0.04 });
-            } else if(currentWeapon==='data') {
-                for(let i=0; i<5; i++) {
-                    const d = new THREE.Mesh(new THREE.PlaneGeometry(0.7,0.7), new THREE.MeshBasicMaterial({color:0x00ccff, transparent:true, opacity:0.6}));
-                    d.position.copy(startPos); d.lookAt(targetPos); scene.add(d);
-                    effects.push({ mesh: d, life: 1.0, type: 'data', vel: targetPos.clone().sub(startPos).normalize().multiplyScalar(1+Math.random()) });
-                }
-            } else if(currentWeapon==='paper') {
-                const p = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.02, 1.2), new THREE.MeshBasicMaterial({color:0xffffff})); p.position.copy(startPos); scene.add(p);
-                effects.push({ mesh: p, life: 1.5, type: 'paper', vel: targetPos.clone().sub(startPos).normalize().multiplyScalar(0.8), rot: new THREE.Vector3(Math.random(),Math.random(),Math.random()) });
+                const tube = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.7), mats.gloss);
+                tube.position.copy(startPos); scene.add(tube);
+                effects.push({ mesh: tube, life: 1.2, type: 'gloss_grenade', vel: targetPos.clone().sub(startPos).normalize().multiplyScalar(1.5), gravity: 0.04 });
             } else if(currentWeapon==='vortex') {
-                const vG = new THREE.Group(); vG.position.copy(esther.position); scene.add(vG);
-                for(let i=0; i<4; i++) {
-                    const rG = new THREE.TorusGeometry(1, 0.15, 16, 64);
-                    const r = new THREE.Mesh(rG, new THREE.MeshBasicMaterial({color: i%2===0?0xff00ff:0x00ffcc, transparent:true, opacity:0.6}));
-                    r.rotation.x = Math.PI/2; vG.add(r);
-                    effects.push({ mesh: r, life: 1.0, type: 'vortex_ring', speed: 1.8 + i*0.6, group: vG });
-                }
-                for(let i = enemies.length-1; i >= 0; i--) { if(esther.position.distanceTo(enemies[i].mesh.position) < 18) enemies[i].destroy(); }
+                const ring = new THREE.Mesh(new THREE.TorusGeometry(1, 0.15, 16, 64), new THREE.MeshBasicMaterial({color: 0xff00ff, transparent:true, opacity:0.6}));
+                ring.rotation.x = Math.PI/2; ring.position.copy(esther.position); scene.add(ring);
+                effects.push({ mesh: ring, life: 1.0, type: 'vortex_ring', speed: 2.2 });
+                for(let i = enemies.length-1; i >= 0; i--) { if(enemies[i] && !enemies[i].markForDeletion && esther.position.distanceTo(enemies[i].mesh.position) < 22) enemies[i].destroy(); }
             }
-            armAnimationState = 12;
         }
 
-        // --- STAR WARS INTRO LOGIC ---
-        function initStarfield() {
-            const cvs = document.getElementById('starfield');
-            const ctx = cvs.getContext('2d');
-            cvs.width = window.innerWidth; cvs.height = window.innerHeight;
-            const stars = Array.from({length: 200}, () => ({ x: Math.random()*cvs.width, y: Math.random()*cvs.height, s: Math.random()*2 }));
-            function draw() {
-                ctx.fillStyle = '#000'; ctx.fillRect(0,0,cvs.width,cvs.height);
-                ctx.fillStyle = '#fff';
-                stars.forEach(s => { ctx.beginPath(); ctx.arc(s.x, s.y, s.s, 0, Math.PI*2); ctx.fill(); s.y += 0.2; if(s.y > cvs.height) s.y = 0; });
-                requestAnimationFrame(draw);
-            }
-            draw();
-        }
-
-        function playIntro() {
-            introOverlay.style.display = 'flex';
-            introUILayer.style.display = 'block'; 
-            initStarfield();
-            const introText = "Hace mucho tiempo en una instancia de Salesforce muy, muy lejana... ¡ZONA EUROPA! Cariño, escucha bien porque esto es una crisis de stock de nivel global. La Zona Europa ha sido invadida por lácteos que no sirven NADA de glamour. Para moverte y servir look por la oficina, usa el joystick o las teclas W A S D. ¡Esa melena tiene que estar en constante movimiento! Toca la pantalla para disparar. Tienes un arsenal de infarto: el Rayo Lactasa, la Granada de Gloss que hace daño en área, y el Vórtice Viral para cuando necesites una limpieza total cada quince segundos. Si los lácteos te tocan, el servidor se cae y... bueno, ya sabes: Esther se cagó. ¡No permitas que arruinen tu chaleco de punto! Slay, cariño, ¡SLAY!";
-            audio.speak(introText, () => { endIntro(); });
+        function resetGame() {
+            score = 0; if(scoreBox) scoreBox.innerText = score; if(messageBox) messageBox.style.display = 'none';
+            enemies.forEach(e => { if(e && e.mesh) scene.remove(e.mesh); }); enemies = [];
+            effects.forEach(e => scene.remove(e.mesh)); effects = [];
+            esther.position.set(0,0,0); gameActive = true; lastVortexTime = 0;
         }
 
         function endIntro() {
-            if (introOverlay.style.display === 'none' && introUILayer.style.display === 'none') return;
-            if (speechSynth) speechSynth.cancel();
-            introOverlay.style.display = 'none';
-            introUILayer.style.display = 'none';
-            uiOverlay.style.display = 'flex';
-            weaponSelector.style.display = 'flex';
-            joyZone.style.display = 'block';
-            resetGame();
+            if (!introOverlay || introOverlay.style.display === 'none') return;
+            window.speechSynthesis.cancel();
+            introOverlay.style.display = 'none'; skipLayer.style.display = 'none';
+            uiOverlay.style.display = 'flex'; weaponSelector.style.display = 'flex'; joyZone.style.display = 'block';
+            nameTagLabel.style.display = 'block'; gameActive = true; resetGame();
         }
 
-        startBtn.addEventListener('click', () => {
-            document.getElementById('start-overlay').style.display = 'none';
-            audio.init(); audioEnabled = true;
-            playIntro();
-        });
-        startBtn.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            document.getElementById('start-overlay').style.display = 'none';
-            audio.init(); audioEnabled = true;
-            playIntro();
-        });
+        function playIntro() { introOverlay.style.display = 'flex'; skipLayer.style.display = 'block'; initStarfield(); audio.speak(document.getElementById('crawl-container').innerText, () => { endIntro(); }); }
 
-        skipBtn.addEventListener('touchstart', (e) => { e.preventDefault(); endIntro(); });
-        skipBtn.addEventListener('click', endIntro);
-
-        // --- GAME EVENTS ---
-        function handleInput(clientX, clientY) {
-            const raycaster = new THREE.Raycaster(), mouse = new THREE.Vector2();
-            mouse.x = (clientX / window.innerWidth) * 2 - 1; mouse.y = -(clientY / window.innerHeight) * 2 + 1;
-            raycaster.setFromCamera(mouse, camera);
-            if(currentWeapon === 'vortex') { fireWeapon(new THREE.Vector3()); return; }
-            const intersects = raycaster.intersectObjects(scene.children);
-            for(let hit of intersects) {
-                const idx = enemies.findIndex(e => e.mesh === hit.object || (e.mesh.children && e.mesh.children.includes(hit.object)));
-                if(idx > -1) {
-                    const e = enemies[idx]; esther.rotation.y = Math.atan2(e.mesh.position.x - esther.position.x, e.mesh.position.z - esther.position.z);
-                    fireWeapon(e.mesh.position);
-                    if(currentWeapon!=='gloss') e.destroy();
-                    return;
-                }
+        function initStarfield() {
+            const cvs = document.getElementById('starfield'); const ctx = cvs.getContext('2d');
+            cvs.width = window.innerWidth; cvs.height = window.innerHeight;
+            const stars = Array.from({length: 250}, () => ({ x: Math.random()*cvs.width, y: Math.random()*cvs.height, s: Math.random()*2.5 }));
+            function draw() {
+                ctx.fillStyle = '#000'; ctx.fillRect(0,0,cvs.width,cvs.height);
+                ctx.fillStyle = '#fff'; stars.forEach(s => { ctx.beginPath(); ctx.arc(s.x, s.y, s.s, 0, Math.PI*2); ctx.fill(); s.y += 0.3; if(s.y > cvs.height) s.y = 0; });
+                if(introOverlay.style.display === 'flex') requestAnimationFrame(draw);
             }
+            draw();
         }
-
-        document.querySelectorAll('.weapon-btn').forEach(btn => {
-            btn.addEventListener('touchstart', (e) => { e.preventDefault(); changeWeapon(btn); });
-            btn.addEventListener('click', () => changeWeapon(btn));
-        });
-        function changeWeapon(btn) {
-            document.querySelectorAll('.weapon-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active'); currentWeapon = btn.dataset.weapon;
-        }
-
-        // IMPROVED JOYSTICK LOGIC
-        joyZone.addEventListener('touchstart', (e) => { 
-            e.preventDefault(); 
-            joystick.active = true; 
-            updateJoy(e.touches[0]); 
-        }, {passive:false});
-
-        joyZone.addEventListener('touchmove', (e) => { 
-            e.preventDefault(); 
-            if(joystick.active) updateJoy(e.touches[0]); 
-        }, {passive:false});
-
-        joyZone.addEventListener('touchend', (e) => { 
-            e.preventDefault(); 
-            joystick.active = false; 
-            joystick.x = 0; joystick.y = 0; 
-            joyKnob.style.transform = `translate(-50%,-50%)`; 
-        }, {passive:false});
-
-        function updateJoy(t) {
-            const r = joyZone.getBoundingClientRect(), cx = r.left + r.width/2, cy = r.top + r.height/2;
-            let dx = t.clientX - cx, dy = t.clientY - cy;
-            const dist = Math.min(Math.sqrt(dx*dx+dy*dy), 50);
-            const ang = Math.atan2(dy, dx);
-            joyKnob.style.transform = `translate(calc(-50% + ${(dx/Math.sqrt(dx*dx+dy*dy))*dist}px), calc(-50% + ${(dy/Math.sqrt(dx*dx+dy*dy))*dist}px))`;
-            joystick.x = (dx/Math.sqrt(dx*dx+dy*dy)) * (dist/50); 
-            joystick.y = (dy/Math.sqrt(dx*dx+dy*dy)) * (dist/50);
-        }
-
-        window.addEventListener('keydown', (e) => { const k = e.key.toLowerCase(); if(k==='w'||k==='arrowup') keys.w=1; if(k==='s'||k==='arrowdown') keys.s=1; if(k==='a'||k==='arrowleft') keys.a=1; if(k==='d'||k==='arrowright') keys.d=1; });
-        window.addEventListener('keyup', (e) => { const k = e.key.toLowerCase(); if(k==='w'||k==='arrowup') keys.w=0; if(k==='s'||k==='arrowdown') keys.s=0; if(k==='a'||k==='arrowleft') keys.a=0; if(k==='d'||k==='arrowright') keys.d=0; });
-        window.addEventListener('wheel', (e) => { zoomLevel = Math.max(0.4, Math.min(2.5, zoomLevel + e.deltaY * 0.001)); });
-
-        container.addEventListener('touchstart', (e) => {
-            const touch = e.touches[0];
-            const rect = joyZone.getBoundingClientRect();
-            if (touch.clientX >= rect.left && touch.clientX <= rect.right && touch.clientY >= rect.top && touch.clientY <= rect.bottom) return;
-            const wRect = weaponSelector.getBoundingClientRect();
-            if (touch.clientY >= wRect.top) return;
-            if(!gameActive && messageBox.style.display === 'block') resetGame();
-            else if (gameActive) handleInput(touch.clientX, touch.clientY);
-        });
-
-        container.addEventListener('mousedown', (e) => {
-            const rect = joyZone.getBoundingClientRect();
-            if (e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom) return;
-            if(!gameActive && messageBox.style.display === 'block') resetGame();
-            else if (gameActive) handleInput(e.clientX, e.clientY);
-        });
-
-        function resetGame() {
-            score = 0; scoreBox.innerText = score; messageBox.style.display = 'none';
-            spawnRate = CONFIG.spawnRateInitial; dairySpeed = CONFIG.dairySpeedBase;
-            enemies.forEach(e => scene.remove(e.mesh)); enemies = [];
-            effects.forEach(e => scene.remove(e.mesh)); effects = [];
-            esther.position.set(0,0,0); gameActive = true;
-            lastVortexTime = 0; vortexOverlay.style.height = '0%';
-        }
-
-        // --- MAIN LOOP ---
-        const amb = new THREE.AmbientLight(0xffffff, 1.2); scene.add(amb);
-        const dir = new THREE.DirectionalLight(0xffffff, 1.5); dir.position.set(30, 50, 30); dir.castShadow = true;
-        dir.shadow.mapSize.set(1024,1024); scene.add(dir);
 
         function animate() {
             requestAnimationFrame(animate);
             if (gameActive) {
                 frameCount++;
-                if (frameCount % Math.floor(spawnRate) === 0) spawnEnemy();
+                if (frameCount % 60 === 0) spawnEnemy();
+                
+                // Input handling
                 let mx = joystick.active ? joystick.x : (keys.d - keys.a), mz = joystick.active ? joystick.y : (keys.s - keys.w);
+                
                 if (Math.abs(mx) > 0.05 || Math.abs(mz) > 0.05) {
-                    esther.position.x += mx * CONFIG.moveSpeed; esther.position.z += mz * CONFIG.moveSpeed;
-                    if(armAnimationState === 0) esther.rotation.y = Math.atan2(mx, mz);
-                    legAnimationTime += 0.35; parts.legL.rotation.x = Math.sin(legAnimationTime)*0.7; parts.legR.rotation.x = Math.cos(legAnimationTime)*0.7;
-                } else { parts.legL.rotation.x = THREE.MathUtils.lerp(parts.legL.rotation.x, 0, 0.2); parts.legR.rotation.x = THREE.MathUtils.lerp(parts.legR.rotation.x, 0, 0.2); }
+                    const nextX = esther.position.x + mx * CONFIG.moveSpeed;
+                    const nextZ = esther.position.z + mz * CONFIG.moveSpeed;
+                    
+                    // Collision check for Esther
+                    const playerBox = new THREE.Box3().setFromCenterAndSize(new THREE.Vector3(nextX, 1, nextZ), new THREE.Vector3(1, 2, 1));
+                    let collide = false;
+                    for(let box of furniturePhysics) { if(playerBox.intersectsBox(box)) collide = true; }
+                    
+                    if(!collide) {
+                        esther.position.x = nextX;
+                        esther.position.z = nextZ;
+                    }
+                    
+                    esther.rotation.y = Math.atan2(mx, mz);
+                    legAnimationTime += 0.35; bodyParts.legL.rotation.x = Math.sin(legAnimationTime)*0.7; bodyParts.legR.rotation.x = Math.cos(legAnimationTime)*0.7;
+                } else { bodyParts.legL.rotation.x = THREE.MathUtils.lerp(bodyParts.legL.rotation.x, 0, 0.2); bodyParts.legR.rotation.x = THREE.MathUtils.lerp(bodyParts.legR.rotation.x, 0, 0.2); }
+                
                 esther.position.clamp(new THREE.Vector3(-55, 0, -55), new THREE.Vector3(55, 0, 55));
                 const timeSV = Date.now() - lastVortexTime; vortexOverlay.style.height = (timeSV < 15000) ? (100 - (timeSV/15000*100)) + '%' : '0%';
+                
                 for (let i = enemies.length-1; i >= 0; i--) {
-                    const e = enemies[i], t = esther.position.clone().add(new THREE.Vector3(0,1.8,0));
-                    if(e.dropping) { e.dropProgress += 0.05; e.mesh.position.y = THREE.MathUtils.lerp(25, e.targetY, Math.min(e.dropProgress, 1.0)); if(e.dropProgress >= 1.0) e.dropping = false; }
-                    else { e.mesh.position.add(t.clone().sub(e.mesh.position).normalize().multiplyScalar(e.speed)); e.mesh.lookAt(t); if (e.mesh.position.distanceTo(t) < 1.6) { gameActive = false; messageBox.style.display = 'block'; audio.speak("Esther se cagó"); } }
+                    const e = enemies[i];
+                    if (!e || e.markForDeletion) { enemies.splice(i, 1); continue; }
+                    const t = esther.position.clone().add(new THREE.Vector3(0,1.8,0));
+                    
+                    if(e.dropping) {
+                        e.dropProgress += 0.04; e.mesh.position.y = THREE.MathUtils.lerp(25, e.targetY, Math.min(e.dropProgress, 1.0));
+                        if(e.dropProgress >= 1.0) e.dropping = false;
+                    } else {
+                        const dir = t.clone().sub(e.mesh.position).normalize();
+                        const nextPos = e.mesh.position.clone().add(dir.multiplyScalar(e.speed));
+                        
+                        // Collision check for Dairy
+                        const enemyBox = new THREE.Box3().setFromObject(e.mesh);
+                        enemyBox.setFromCenterAndSize(nextPos, new THREE.Vector3(1.5, 1.5, 1.5));
+                        let collide = false;
+                        for(let box of furniturePhysics) { if(enemyBox.intersectsBox(box)) collide = true; }
+                        
+                        if(!collide) {
+                            e.mesh.position.copy(nextPos);
+                        } else {
+                            // Slide logic simple: try x then z
+                            const nextPosX = e.mesh.position.clone().add(new THREE.Vector3(dir.x, 0, 0).multiplyScalar(e.speed));
+                            const boxX = new THREE.Box3().setFromCenterAndSize(nextPosX, new THREE.Vector3(1.5, 1.5, 1.5));
+                            let collideX = false;
+                            for(let box of furniturePhysics) if(boxX.intersectsBox(box)) collideX = true;
+                            if(!collideX) e.mesh.position.x = nextPosX.x;
+                        }
+                        
+                        e.mesh.lookAt(t);
+                        if (e.mesh.position.distanceTo(t) < 1.6) { gameActive = false; document.getElementById('message').style.display = 'block'; audio.speak("Esther se cagó"); }
+                    }
                 }
                 for (let i = effects.length-1; i >= 0; i--) {
                     const ef = effects[i]; ef.life -= 0.08;
-                    if(ef.type === 'beam') { ef.mesh.material.opacity = ef.life; ef.mesh.scale.x = ef.life; }
+                    if(ef.type === 'beam') { ef.mesh.material.opacity = ef.life; }
                     else if(ef.type === 'gloss_grenade') { 
-                        ef.mesh.position.add(ef.vel); ef.vel.y -= ef.gravity; ef.mesh.rotation.x += 0.2; spawnSparkle(ef.mesh.position); if(ef.life < 0.1) triggerExplosion(ef.mesh.position, 0xff0066, true); 
+                        ef.mesh.position.add(ef.vel); ef.vel.y -= ef.gravity; if(ef.life < 0.1) {
+                            for(let j = enemies.length-1; j>=0; j--) if(enemies[j] && !enemies[j].markForDeletion && enemies[j].mesh.position.distanceTo(ef.mesh.position)<14) enemies[j].destroy();
+                            triggerExplosion(ef.mesh.position, 0xff0066, true);
+                        }
                     }
-                    else if(ef.type === 'data') { ef.mesh.position.add(ef.vel); ef.mesh.rotation.z += 0.25; }
-                    else if(ef.type === 'paper') { ef.mesh.position.add(ef.vel); ef.mesh.rotation.x += ef.rot.x; }
                     else if(ef.type === 'vortex_ring') { ef.mesh.scale.x += ef.speed; ef.mesh.scale.y += ef.speed; ef.mesh.material.opacity = ef.life; }
-                    if(ef.life <= 0) { if(ef.group) scene.remove(ef.group); scene.remove(ef.mesh); effects.splice(i, 1); }
+                    if(ef.life <= 0) { scene.remove(ef.mesh); effects.splice(i, 1); }
                 }
             }
-            camera.position.lerp(esther.position.clone().add(CONFIG.cameraDefaults.offset.clone().multiplyScalar(zoomLevel)), 0.12);
-            camera.lookAt(esther.position);
-            if (armAnimationState > 0) { parts.armR.rotation.x = -Math.PI/1.3; armAnimationState--; } else { parts.armR.rotation.x = THREE.MathUtils.lerp(parts.armR.rotation.x, 0.2, 0.1); }
+            if(camera && esther) {
+                camera.position.lerp(esther.position.clone().add(CONFIG.cameraDefaults.offset.clone().multiplyScalar(zoomLevel)), 0.12);
+                camera.lookAt(esther.position);
+            }
+            if (bodyParts.armR && armAnimationState > 0) { bodyParts.armR.rotation.x = THREE.MathUtils.lerp(bodyParts.armR.rotation.x, -Math.PI/2, 0.4); armAnimationState--; }
+            else if (bodyParts.armR) { bodyParts.armR.rotation.x = THREE.MathUtils.lerp(bodyParts.armR.rotation.x, 0, 0.1); }
             for (let i = particles.length-1; i >= 0; i--) { const p = particles[i]; p.mesh.position.add(p.vel); p.life -= 0.04; if(p.life <= 0) { scene.remove(p.mesh); particles.splice(i, 1); } else { p.mesh.scale.setScalar(p.life); p.mesh.material.opacity = p.life; } }
-            const headW = esther.position.clone().add(new THREE.Vector3(0, 4.0, 0)); headW.project(camera);
-            nameTag.style.left = `${(headW.x * 0.5 + 0.5) * window.innerWidth}px`; nameTag.style.top = `${(headW.y * -0.5 + 0.5) * window.innerHeight}px`;
+            if (gameActive && nameTagLabel && esther && camera) { 
+                const headPos = new THREE.Vector3(0, 4.2, 0); headPos.applyMatrix4(esther.matrixWorld); headPos.project(camera); 
+                nameTagLabel.style.left = `${(headPos.x * 0.5 + 0.5) * window.innerWidth}px`; 
+                nameTagLabel.style.top = `${(headPos.y * -0.5 + 0.5) * window.innerHeight}px`; 
+            }
             renderer.render(scene, camera);
         }
-        window.addEventListener('resize', () => { camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); });
-        animate();
+
+        window.onload = () => {
+            initGlobalSelectors();
+            initMaterials();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            container.appendChild(renderer.domElement);
+            buildEsther();
+            buildOffice();
+            scene.add(new THREE.AmbientLight(0xffffff, 1.2));
+            const dir = new THREE.DirectionalLight(0xffffff, 1.2); dir.position.set(20, 50, 20); dir.castShadow = true; scene.add(dir);
+
+            startBtn.addEventListener('click', () => { document.getElementById('start-overlay').style.display='none'; audio.init(); audioEnabled=true; playIntro(); });
+            startBtn.addEventListener('touchstart', (e) => { e.preventDefault(); document.getElementById('start-overlay').style.display='none'; audio.init(); audioEnabled=true; playIntro(); });
+            skipBtn.addEventListener('click', endIntro);
+            skipBtn.addEventListener('touchstart', (e) => { e.preventDefault(); endIntro(); });
+            
+            joyZone.addEventListener('touchstart', (e) => { e.preventDefault(); joystick.active=true; 
+                const update = (t) => {
+                    const r = joyZone.getBoundingClientRect(), cx = r.left + r.width/2, cy = r.top + r.height/2;
+                    const dx = t.clientX - cx, dy = t.clientY - cy;
+                    const dist = Math.min(Math.sqrt(dx*dx+dy*dy), 40); const ang = Math.atan2(dy, dx);
+                    joyKnob.style.transform = `translate(calc(-50% + ${(dx/Math.sqrt(dx*dx+dy*dy || 1))*dist}px), calc(-50% + ${(dy/Math.sqrt(dx*dx+dy*dy || 1))*dist}px))`;
+                    joystick.x = (dx/Math.sqrt(dx*dx+dy*dy || 1)) * (dist/40); joystick.y = (dy/Math.sqrt(dx*dx+dy*dy || 1)) * (dist/40);
+                };
+                update(e.touches[0]);
+                const mv = (me) => { me.preventDefault(); update(me.touches[0]); };
+                const up = (ue) => { ue.preventDefault(); joystick.active=false; joystick.x=0; joystick.y=0; joyKnob.style.transform=`translate(-50%,-50%)`; window.removeEventListener('touchmove', mv); window.removeEventListener('touchend', up); };
+                window.addEventListener('touchmove', mv, {passive:false});
+                window.addEventListener('touchend', up, {passive:false});
+            }, {passive:false});
+            
+            container.addEventListener('touchstart', (e) => { if (e.touches.length === 2) initialPinchDist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY); }, {passive: false});
+            container.addEventListener('touchmove', (e) => {
+                if (e.touches.length === 2 && initialPinchDist > 0) {
+                    const dist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
+                    zoomLevel = THREE.MathUtils.clamp(zoomLevel / (dist / initialPinchDist > 1 ? 1.04 : 0.96), CONFIG.cameraDefaults.minZoom, CONFIG.cameraDefaults.maxZoom);
+                    initialPinchDist = dist;
+                }
+            }, {passive: false});
+            window.addEventListener('keydown', (e) => { const k = e.key.toLowerCase(); if(k==='w') keys.w=1; if(k==='s') keys.s=1; if(k==='a') keys.a=1; if(k==='d') keys.d=1; });
+            window.addEventListener('keyup', (e) => { const k = e.key.toLowerCase(); if(k==='w') keys.w=0; if(k==='s') keys.s=0; if(k==='a') keys.a=0; if(k==='d') keys.d=0; });
+            window.addEventListener('wheel', (e) => { zoomLevel = THREE.MathUtils.clamp(zoomLevel + e.deltaY * 0.001, CONFIG.cameraDefaults.minZoom, CONFIG.cameraDefaults.maxZoom); });
+            container.addEventListener('pointerdown', (e) => {
+                if (!gameActive) { if(messageBox.style.display === 'block') resetGame(); return; }
+                const r = joyZone.getBoundingClientRect();
+                if (e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top) return;
+                const raycaster = new THREE.Raycaster(), mouseV = new THREE.Vector2();
+                mouseV.x = (e.clientX / window.innerWidth) * 2 - 1; mouseV.y = -(e.clientY / window.innerHeight) * 2 + 1;
+                raycaster.setFromCamera(mouseV, camera);
+                if(currentWeapon === 'vortex') { fireWeapon(new THREE.Vector3()); return; }
+                const intersects = raycaster.intersectObjects(scene.children, true);
+                for(let hit of intersects) {
+                    const idx = enemies.findIndex(e => e && !e.markForDeletion && (e.mesh === hit.object || e.mesh.children.includes(hit.object)));
+                    if(idx > -1) {
+                        esther.rotation.y = Math.atan2(enemies[idx].mesh.position.x - esther.position.x, enemies[idx].mesh.position.z - esther.position.z);
+                        fireWeapon(enemies[idx].mesh.position);
+                        if(currentWeapon!=='gloss') enemies[idx].destroy();
+                        return;
+                    }
+                }
+            });
+            document.querySelectorAll('.weapon-btn').forEach(btn => btn.addEventListener('click', () => { 
+                document.querySelectorAll('.weapon-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); currentWeapon = btn.dataset.weapon; 
+            }));
+            animate();
+        };
+
+        window.addEventListener('resize', () => { 
+            if(camera && renderer) {
+                camera.aspect = window.innerWidth / window.innerHeight; 
+                camera.updateProjectionMatrix(); 
+                renderer.setSize(window.innerWidth, window.innerHeight); 
+            }
+        });
     </script>
 </body>
 </html>
