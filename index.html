@@ -8,9 +8,9 @@
         body { margin: 0; overflow: hidden; background-color: #050505; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; touch-action: none; user-select: none; -webkit-user-select: none; }
         #canvas-container { width: 100vw; height: 100vh; position: relative; overflow: hidden; }
         
-        /* UI Game Elements - Sophisticated Glassmorphism */
+        /* UI Game Elements */
         #ui {
-            position: absolute; top: 40px; left: 20px;
+            position: absolute; top: max(20px, env(safe-area-inset-top)); left: 20px;
             color: white; background: rgba(0, 0, 0, 0.6);
             padding: 10px 18px; border-radius: 12px;
             pointer-events: none; border: 1px solid rgba(0, 176, 111, 0.5);
@@ -20,34 +20,54 @@
         }
         .score-display { font-size: 1.5rem; color: #4fffa6; font-weight: 800; font-family: 'Courier New', monospace; }
         
-        /* WEAPON SELECTOR - RIGHT SIDE VERTICAL */
+        /* Weapon Selector - Right Vertical */
         #weapon-selector {
             position: absolute; 
-            top: 50%; right: 20px; /* Moved to right */
-            transform: translateY(-50%); /* Center vertically */
+            top: 50%; 
+            right: 20px; 
+            transform: translateY(-50%);
             display: none; 
-            flex-direction: column; /* Vertical layout */
-            gap: 12px;
-            background: rgba(0,0,0,0.7);
-            padding: 12px; border-radius: 20px;
+            flex-direction: column; 
+            gap: 15px; 
+            background: rgba(0,0,0,0.6); 
+            padding: 12px; border-radius: 25px;
             border: 1px solid rgba(255,255,255,0.1);
             z-index: 600; backdrop-filter: blur(8px);
         }
         .weapon-btn {
-            width: 55px; height: 55px;
+            width: 45px; height: 45px;
             border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);
             background: rgba(40,40,40,0.8); color: white;
-            font-size: 1.5rem; display: flex; align-items: center; justify-content: center;
+            font-size: 1.2rem; display: flex; align-items: center; justify-content: center;
             cursor: pointer; position: relative; overflow: hidden;
             transition: all 0.2s; -webkit-tap-highlight-color: transparent;
         }
         .weapon-btn.active {
-            border-color: #00b06f; background: rgba(0, 68, 34, 0.8);
-            box-shadow: 0 0 12px #00b06f; transform: scale(1.1);
+            border-color: #00b06f; background: rgba(0, 68, 34, 0.9);
+            box-shadow: 0 0 15px #00b06f; transform: scale(1.1);
         }
         .cooldown-overlay { position: absolute; bottom: 0; left: 0; width: 100%; height: 0%; background: rgba(255, 0, 255, 0.4); z-index: 1; pointer-events: none; }
 
-        /* INTRO LAYER */
+        /* Joystick */
+        #joystick-zone {
+            position: absolute; 
+            width: 100px; height: 100px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%; border: 2px solid rgba(255, 255, 255, 0.2);
+            z-index: 700; touch-action: none; 
+            display: none; pointer-events: none;
+            transform: translate(-50%, -50%);
+            transition: opacity 0.2s;
+        }
+        #joystick-knob {
+            width: 40px; height: 40px;
+            background: #00b06f; border-radius: 50%;
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+        }
+
+        /* Intro & Overlays */
         #intro-overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: #000; z-index: 2000;
@@ -55,36 +75,23 @@
             overflow: hidden;
         }
         #starfield { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; }
-        
-        #crawl-perspective {
-            width: 90%; height: 100%; perspective: 350px;
-            display: flex; justify-content: center;
-        }
+        #crawl-perspective { width: 90%; height: 100%; perspective: 350px; display: flex; justify-content: center; }
         #crawl-container {
             position: relative; width: 100%; max-width: 650px;
             color: #ffde11; font-size: 1.3rem; font-weight: 800;
             text-align: center; transform: rotateX(25deg);
-            animation: crawl 260s linear forwards;
-            line-height: 1.8;
+            animation: crawl 260s linear forwards; line-height: 1.8;
         }
-        @keyframes crawl {
-            0% { top: 100vh; }
-            100% { top: -4500px; }
-        }
+        @keyframes crawl { 0% { top: 100vh; } 100% { top: -4500px; } }
         
-        /* SKIP BUTTON - MOVED TO SAFE AREA */
-        #skip-layer {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 9999; pointer-events: none; display: none;
-        }
+        #skip-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 3000; pointer-events: none; display: none; }
         #skip-intro {
-            position: absolute; top: 40px; right: 20px; /* Top right is safer on mobile */
-            background: #00b06f; color: white;
-            border: 2px solid white; padding: 12px 25px; border-radius: 50px;
+            position: absolute; top: max(20px, env(safe-area-inset-top)); right: 20px;
+            background: rgba(0, 176, 111, 0.9); color: white;
+            border: 2px solid white; padding: 10px 20px; border-radius: 50px;
             cursor: pointer; pointer-events: auto; font-weight: 900;
             text-transform: uppercase; letter-spacing: 1px;
-            font-size: 0.9rem; box-shadow: 0 10px 20px rgba(0,176,111,0.5);
-            -webkit-tap-highlight-color: transparent;
+            font-size: 0.8rem; box-shadow: 0 5px 15px rgba(0,0,0,0.5); -webkit-tap-highlight-color: transparent;
         }
 
         #start-overlay {
@@ -94,12 +101,11 @@
             color: white; z-index: 4000; text-align: center; padding: 20px; box-sizing: border-box;
         }
         .btn-start {
-            padding: 22px 55px; background: #00b06f; color: white;
+            padding: 20px 50px; background: #00b06f; color: white;
             font-size: 1.5rem; font-weight: 900; border: none; border-radius: 50px;
             margin-top: 30px; cursor: pointer;
             box-shadow: 0 10px 35px rgba(0,176,111,0.5);
-            text-transform: uppercase; letter-spacing: 2px;
-            -webkit-tap-highlight-color: transparent;
+            text-transform: uppercase; letter-spacing: 2px; -webkit-tap-highlight-color: transparent;
         }
         
         #message {
@@ -111,33 +117,14 @@
         }
         .fart-text { font-size: 3.5rem; margin: 0; animation: shake 0.15s infinite; font-weight: 900; }
         .subtitle { font-size: 1.8rem; color: #fff; margin-top: 20px; font-weight: 700; font-style: italic; }
-
         @keyframes shake { 0% { transform: translate(3px, 3px); } 50% { transform: translate(-3px, -3px); } 100% { transform: translate(3px, -3px); } }
         
-        /* DYNAMIC JOYSTICK - Hidden by default, position absolute */
-        #joystick-zone {
-            position: absolute; 
-            width: 120px; height: 120px;
-            background: rgba(255, 255, 255, 0.15);
-            border-radius: 50%; border: 2px solid rgba(255, 255, 255, 0.3);
-            z-index: 700; touch-action: none; display: none;
-            pointer-events: none; /* Let touches pass through to tracking */
-        }
-        #joystick-knob {
-            width: 50px; height: 50px;
-            background: #00b06f; border-radius: 50%;
-            position: absolute; top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            box-shadow: 0 0 15px rgba(0,0,0,0.6);
-        }
-
         #name-tag-label {
             position: absolute; background: rgba(0,0,0,0.7);
             color: #ffffff; padding: 4px 12px; border-radius: 8px;
             font-size: 0.8rem; font-weight: 900; pointer-events: none;
             transform: translate(-50%, -100%); z-index: 1000;
-            display: none; text-transform: uppercase; letter-spacing: 2px;
-            border: 1px solid #00ff88;
+            display: none; text-transform: uppercase; letter-spacing: 2px; border: 1px solid #00ff88;
         }
 
         .controls-hint { position: absolute; bottom: 8px; width: 100%; text-align: center; color: rgba(255,255,255,0.2); pointer-events: none; font-size: 0.7rem; text-transform: uppercase; z-index: 5; }
@@ -197,6 +184,7 @@
         </div>
 
         <div id="name-tag-label">Esther</div>
+        
         <div id="joystick-zone"><div id="joystick-knob"></div></div>
         
         <div id="message">
@@ -206,6 +194,8 @@
         </div>
     </div>
 
+    <div class="controls-hint">Joystick (Izq) • Disparar (Der) • 💄/🌟 = AoE</div>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
     <script>
@@ -214,10 +204,8 @@
         let container, scoreBox, messageBox, nameTagLabel, joyZone, joyKnob, startBtn, vortexOverlay, introOverlay, skipLayer, skipBtn, weaponSelector, uiOverlay;
         let mats = {};
         
-        // Game State
         let gameActive = false, score = 0, currentWeapon = 'laser', zoomLevel = 1.0;
         let enemies = [], particles = [], effects = [], collidables = [];
-        // Dynamic joystick state
         let joystick = { active: false, x: 0, y: 0, originX: 0, originY: 0, touchId: null };
         const keys = { w:0, a:0, s:0, d:0 };
         let armAnimationState = 0, legAnimationTime = 0, frameCount = 0;
@@ -225,7 +213,6 @@
         let esther = new THREE.Group();
         const bodyParts = {};
 
-        // --- CONFIG ---
         const CONFIG = {
             moveSpeed: 0.28,
             cameraDefaults: { offset: new THREE.Vector3(0, 11, 16), minZoom: 0.3, maxZoom: 3.5 },
@@ -238,7 +225,6 @@
             vortexCooldownTime: 15000 
         };
 
-        // Audio Management
         let speechSynth = window.speechSynthesis;
         const audio = {
             ctx: null,
@@ -265,7 +251,6 @@
             }
         };
 
-        // --- TEXTURE STUDIO ---
         const TextureStudio = {
             generateCheese() {
                 const c = document.createElement('canvas'); c.width = 256; c.height = 256;
@@ -319,7 +304,6 @@
             }
         };
 
-        // --- INIT FUNCTIONS ---
         function initGlobalSelectors() {
             container = document.getElementById('canvas-container');
             scoreBox = document.getElementById('score');
@@ -372,11 +356,12 @@
             const puffGeo = new THREE.SphereGeometry(0.38, 16, 16);
             const puffL = new THREE.Mesh(puffGeo, mats.sweater); puffL.position.set(-0.55, 1.1, 0); torso.add(puffL);
             const puffR = new THREE.Mesh(puffGeo, mats.sweater); puffR.position.set(0.55, 1.1, 0); torso.add(puffR);
-            const armGeo = new THREE.BoxGeometry(0.24, 1, 0.24);
+
             const rArmGroup = new THREE.Group(); rArmGroup.position.set(0.6, 1.1, 0);
-            const rArmM = new THREE.Mesh(armGeo, mats.sweater); rArmM.position.y = -0.5; rArmGroup.add(rArmM);
+            const rArmM = new THREE.Mesh(new THREE.BoxGeometry(0.24, 1, 0.24), mats.sweater); rArmM.position.y = -0.5; rArmGroup.add(rArmM);
             const rHand = new THREE.Mesh(new THREE.SphereGeometry(0.12), mats.skin); rHand.position.y = -1.0; rArmGroup.add(rHand);
             torso.add(rArmGroup); bodyParts.armR = rArmGroup;
+
             const lArmGroup = new THREE.Group(); lArmGroup.position.set(-0.6, 1.1, 0);
             const lArmM = new THREE.Mesh(new THREE.BoxGeometry(0.24, 1, 0.24), mats.sweater); lArmM.position.y = -0.5; lArmGroup.add(lArmM);
             const lHand = new THREE.Mesh(new THREE.SphereGeometry(0.12), mats.skin); lHand.position.y = -1.0; lArmGroup.add(lHand);
@@ -472,9 +457,7 @@
                 const ring = new THREE.Mesh(new THREE.TorusGeometry(1, 0.15, 16, 64), new THREE.MeshBasicMaterial({color: 0xff00ff, transparent:true, opacity:0.6}));
                 ring.rotation.x = Math.PI/2; ring.position.copy(esther.position); scene.add(ring);
                 effects.push({ mesh: ring, life: 1.0, type: 'vortex_ring', speed: 2.2 });
-                for(let i = enemies.length-1; i >= 0; i--) { 
-                    if(enemies[i] && !enemies[i].markForDeletion && esther.position.distanceTo(enemies[i].mesh.position) < 22) enemies[i].destroy(); 
-                }
+                for(let i = enemies.length-1; i >= 0; i--) { if(enemies[i] && !enemies[i].markForDeletion && esther.position.distanceTo(enemies[i].mesh.position) < 22) enemies[i].destroy(); }
             }
         }
 
@@ -524,6 +507,11 @@
                 joyZone.style.left = (joystick.originX - 60) + 'px'; 
                 joyZone.style.top = (joystick.originY - 60) + 'px';
                 joyKnob.style.transform = `translate(-50%, -50%)`;
+                
+                // Fade in
+                joyZone.style.opacity = '0';
+                joyZone.style.transition = 'opacity 0.2s';
+                requestAnimationFrame(() => joyZone.style.opacity = '1');
                 return;
             }
             const dx = t.clientX - joystick.originX;
@@ -537,6 +525,23 @@
 
         function resetJoystick() {
             joystick.active = false; joystick.valX = 0; joystick.valY = 0; joyZone.style.display = 'none';
+        }
+
+        function handleInput(clientX, clientY) {
+            const raycaster = new THREE.Raycaster(), mouseV = new THREE.Vector2();
+            mouseV.x = (clientX / window.innerWidth) * 2 - 1; mouseV.y = -(clientY / window.innerHeight) * 2 + 1;
+            raycaster.setFromCamera(mouseV, camera);
+            if(currentWeapon === 'vortex') { fireWeapon(new THREE.Vector3()); return; }
+            const intersects = raycaster.intersectObjects(scene.children, true);
+            for(let hit of intersects) {
+                const idx = enemies.findIndex(e => e && !e.markForDeletion && (e.mesh === hit.object || e.mesh.children.includes(hit.object)));
+                if(idx > -1) {
+                    esther.rotation.y = Math.atan2(enemies[idx].mesh.position.x - esther.position.x, enemies[idx].mesh.position.z - esther.position.z);
+                    fireWeapon(enemies[idx].mesh.position);
+                    if(currentWeapon!=='gloss') enemies[idx].destroy();
+                    return;
+                }
+            }
         }
 
         function animate() {
@@ -564,26 +569,8 @@
                         e.dropProgress += 0.04; e.mesh.position.y = THREE.MathUtils.lerp(25, e.targetY, Math.min(e.dropProgress, 1.0));
                         if(e.dropProgress >= 1.0) e.dropping = false;
                     } else {
-                        const dir = t.clone().sub(e.mesh.position).normalize();
-                        const nextPos = e.mesh.position.clone().add(dir.multiplyScalar(e.speed));
-                        const enemyBox = new THREE.Box3().setFromCenterAndSize(nextPos, new THREE.Vector3(1.5, 2, 1.5));
-                        let collide = false;
-                        for(let box of collidables) if(enemyBox.intersectsBox(box)) collide = true;
-                        
-                        if(!collide) { e.mesh.position.copy(nextPos); }
-                        else {
-                            const slideX = e.mesh.position.clone().add(new THREE.Vector3(dir.x, 0, 0).multiplyScalar(e.speed));
-                            const boxX = new THREE.Box3().setFromCenterAndSize(slideX, new THREE.Vector3(1.5, 2, 1.5));
-                            let hitX = false; for(let b of collidables) if(boxX.intersectsBox(b)) hitX = true;
-                            if(!hitX) e.mesh.position.x = slideX.x;
-                            else {
-                                const slideZ = e.mesh.position.clone().add(new THREE.Vector3(0, 0, dir.z).multiplyScalar(e.speed));
-                                const boxZ = new THREE.Box3().setFromCenterAndSize(slideZ, new THREE.Vector3(1.5, 2, 1.5));
-                                let hitZ = false; for(let b of collidables) if(boxZ.intersectsBox(b)) hitZ = true;
-                                if(!hitZ) e.mesh.position.z = slideZ.z;
-                            }
-                        }
-                        e.mesh.lookAt(t);
+                        const d = t.clone().sub(e.mesh.position).normalize();
+                        e.mesh.position.add(d.multiplyScalar(e.speed)); e.mesh.lookAt(t);
                         if (e.mesh.position.distanceTo(t) < 1.6) { gameActive = false; document.getElementById('message').style.display = 'block'; audio.speak("Esther se cagó"); }
                     }
                 }
@@ -617,38 +604,24 @@
             renderer.render(scene, camera);
         }
 
-        function handleInput(clientX, clientY) {
-            const raycaster = new THREE.Raycaster(), mouseV = new THREE.Vector2();
-            mouseV.x = (clientX / window.innerWidth) * 2 - 1; mouseV.y = -(clientY / window.innerHeight) * 2 + 1;
-            raycaster.setFromCamera(mouseV, camera);
-            if(currentWeapon === 'vortex') { fireWeapon(new THREE.Vector3()); return; }
-            const intersects = raycaster.intersectObjects(scene.children, true);
-            for(let hit of intersects) {
-                const idx = enemies.findIndex(e => e && !e.markForDeletion && (e.mesh === hit.object || e.mesh.children.includes(hit.object)));
-                if(idx > -1) {
-                    esther.rotation.y = Math.atan2(enemies[idx].mesh.position.x - esther.position.x, enemies[idx].mesh.position.z - esther.position.z);
-                    fireWeapon(enemies[idx].mesh.position);
-                    if(currentWeapon!=='gloss') enemies[idx].destroy();
-                    return;
-                }
-            }
-        }
-
-        // --- ONLOAD ---
+        // --- FINAL INIT ---
         window.onload = () => {
             initGlobalSelectors();
             
+            // 1. Create Scene & Camera & Renderer first
             scene = new THREE.Scene();
             scene.background = new THREE.Color(CONFIG.colors.bg);
             scene.fog = new THREE.FogExp2(CONFIG.colors.bg, 0.015);
             camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
             renderer = new THREE.WebGLRenderer({ antialias: true });
             
+            // 2. Set Size
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.shadowMap.enabled = true;
             renderer.shadowMap.type = THREE.PCFSoftShadowMap;
             container.appendChild(renderer.domElement);
 
+            // 3. Build World
             initMaterials();
             buildEsther();
             buildOffice();
@@ -656,50 +629,33 @@
             scene.add(new THREE.AmbientLight(0xffffff, 1.2));
             const dir = new THREE.DirectionalLight(0xffffff, 1.2); dir.position.set(20, 50, 20); dir.castShadow = true; scene.add(dir);
 
+            // 4. Handlers
             startBtn.addEventListener('click', () => { document.getElementById('start-overlay').style.display='none'; audio.init(); audioEnabled=true; playIntro(); });
             startBtn.addEventListener('touchstart', (e) => { e.preventDefault(); document.getElementById('start-overlay').style.display='none'; audio.init(); audioEnabled=true; playIntro(); });
             skipBtn.addEventListener('click', endIntro);
             skipBtn.addEventListener('touchstart', (e) => { e.preventDefault(); endIntro(); });
             
-            container.addEventListener('touchstart', (e) => {
-                const t = e.changedTouches[0];
-                if (e.touches.length > 1) return; // Pinch
-                if (t.clientY < 100) return; // UI top
-                if (t.clientY > window.innerHeight - 100 && t.clientX > window.innerWidth / 2) return; // Weapon area
-                
-                if (t.clientX < window.innerWidth / 2) {
-                    e.preventDefault();
-                    handleJoystick(t);
-                } else {
-                    if (gameActive) handleInput(t.clientX, t.clientY);
-                }
-            }, {passive: false});
-
+            joyZone.addEventListener('touchstart', (e) => { e.preventDefault(); joystick.active=true; 
+                const update = (t) => {
+                    const r = joyZone.getBoundingClientRect(), cx = r.left + r.width/2, cy = r.top + r.height/2;
+                    const dx = t.clientX - cx, dy = t.clientY - cy;
+                    const dist = Math.min(Math.sqrt(dx*dx+dy*dy), 40); const ang = Math.atan2(dy, dx);
+                    joyKnob.style.transform = `translate(calc(-50% + ${(dx/Math.sqrt(dx*dx+dy*dy || 1))*dist}px), calc(-50% + ${(dy/Math.sqrt(dx*dx+dy*dy || 1))*dist}px))`;
+                    joystick.x = (dx/Math.sqrt(dx*dx+dy*dy || 1)) * (dist/40); joystick.y = (dy/Math.sqrt(dx*dx+dy*dy || 1)) * (dist/40);
+                };
+                update(e.touches[0]);
+                const mv = (me) => { me.preventDefault(); update(me.touches[0]); };
+                const up = (ue) => { ue.preventDefault(); joystick.active=false; joystick.x=0; joystick.y=0; joyKnob.style.transform=`translate(-50%,-50%)`; window.removeEventListener('touchmove', mv); window.removeEventListener('touchend', up); };
+                window.addEventListener('touchmove', mv, {passive:false});
+                window.addEventListener('touchend', up, {passive:false});
+            }, {passive:false});
+            
+            container.addEventListener('touchstart', (e) => { if (e.touches.length === 2) initialPinchDist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY); }, {passive: false});
             container.addEventListener('touchmove', (e) => {
-                if (joystick.active) {
-                    e.preventDefault();
-                    handleJoystick(e.changedTouches[0]); // Update logic uses same math
-                    const t = e.changedTouches[0];
-                    const dx = t.clientX - joystick.originX;
-                    const dy = t.clientY - joystick.originY;
-                    const dist = Math.min(Math.sqrt(dx*dx+dy*dy), 50); const ang = Math.atan2(dy, dx);
-                    joyKnob.style.transform = `translate(calc(-50% + ${Math.cos(ang)*dist}px), calc(-50% + ${Math.sin(ang)*dist}px))`;
-                    joystick.valX = (dx/Math.sqrt(dx*dx+dy*dy || 1)) * (dist/50);
-                    joystick.valY = (dy/Math.sqrt(dx*dx+dy*dy || 1)) * (dist/50);
-                }
-            }, {passive: false});
-
-            container.addEventListener('touchend', (e) => {
-                if (joystick.active) resetJoystick();
-            });
-
-            let initialPinch = 0;
-            container.addEventListener('touchstart', (e) => { if (e.touches.length === 2) initialPinch = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY); }, {passive: false});
-            container.addEventListener('touchmove', (e) => {
-                if (e.touches.length === 2 && initialPinch > 0) {
+                if (e.touches.length === 2 && initialPinchDist > 0) {
                     const dist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
-                    zoomLevel = THREE.MathUtils.clamp(zoomLevel / (dist / initialPinch > 1 ? 1.04 : 0.96), CONFIG.cameraDefaults.minZoom, CONFIG.cameraDefaults.maxZoom);
-                    initialPinch = dist;
+                    zoomLevel = THREE.MathUtils.clamp(zoomLevel / (dist / initialPinchDist > 1 ? 1.04 : 0.96), CONFIG.cameraDefaults.minZoom, CONFIG.cameraDefaults.maxZoom);
+                    initialPinchDist = dist;
                 }
             }, {passive: false});
 
