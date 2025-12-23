@@ -2,19 +2,19 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Esther: Arsenal Lácteo 🛡️💅</title>
     <style>
         body { margin: 0; overflow: hidden; background-color: #050505; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; touch-action: none; user-select: none; -webkit-user-select: none; }
-        #canvas-container { width: 100vw; height: 100vh; position: relative; }
+        #canvas-container { width: 100vw; height: 100vh; position: relative; overflow: hidden; }
         
         #ui {
             position: absolute;
-            top: 20px; left: 20px;
+            top: 40px; left: 20px;
             color: white; background: rgba(0, 0, 0, 0.85);
             padding: 12px 20px; border-radius: 15px;
             pointer-events: none; border: 2px solid #00b06f;
-            backdrop-filter: blur(15px); z-index: 10;
+            backdrop-filter: blur(15px); z-index: 100;
             display: none; align-items: center; gap: 15px;
             box-shadow: 0 0 30px rgba(0, 176, 111, 0.4);
         }
@@ -22,31 +22,30 @@
         
         #weapon-selector {
             position: absolute;
-            bottom: 25px; left: 50%;
+            bottom: 30px; left: 50%;
             transform: translateX(-50%);
-            display: none; gap: 12px;
+            display: none; gap: 10px;
             background: rgba(0,0,0,0.9);
             padding: 12px; border-radius: 25px;
             border: 1px solid rgba(255,255,255,0.15);
-            z-index: 100; backdrop-filter: blur(10px);
+            z-index: 200; backdrop-filter: blur(10px);
             box-shadow: 0 10px 40px rgba(0,0,0,0.8);
         }
         .weapon-btn {
-            width: 55px; height: 55px;
-            border-radius: 15px; border: 2px solid rgba(255,255,255,0.1);
+            width: 50px; height: 50px;
+            border-radius: 12px; border: 2px solid rgba(255,255,255,0.1);
             background: #222; color: white;
-            font-size: 1.6rem; display: flex; align-items: center; justify-content: center;
+            font-size: 1.4rem; display: flex; align-items: center; justify-content: center;
             cursor: pointer; position: relative; overflow: hidden;
-            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            -webkit-tap-highlight-color: transparent;
+            transition: all 0.2s; -webkit-tap-highlight-color: transparent;
         }
         .weapon-btn.active {
             border-color: #00b06f; background: #004422;
-            box-shadow: 0 0 15px #00b06f; transform: scale(1.15) translateY(-5px);
+            box-shadow: 0 0 15px #00b06f; transform: scale(1.1) translateY(-3px);
         }
         .cooldown-overlay { position: absolute; bottom: 0; left: 0; width: 100%; height: 0%; background: rgba(255, 0, 255, 0.3); z-index: 1; pointer-events: none; }
 
-        /* STAR WARS INTRO STYLES */
+        /* STAR WARS INTRO STYLES - SLOWED DOWN */
         #intro-overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: #000; z-index: 1000;
@@ -55,34 +54,40 @@
         }
         #starfield { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; }
         #crawl-container {
-            position: relative; width: 80%; max-width: 700px;
-            color: #ffde11; font-size: 1.5rem; font-weight: 900;
+            position: relative; width: 85%; max-width: 700px;
+            color: #ffde11; font-size: 1.4rem; font-weight: 900;
             text-align: center; transform: rotateX(25deg);
-            animation: crawl 140s linear forwards;
+            animation: crawl 180s linear forwards; /* ULTRA SLOW 180s */
         }
         @keyframes crawl {
-            0% { top: 700px; opacity: 1; }
+            0% { top: 100vh; opacity: 1; }
             95% { opacity: 1; }
-            100% { top: -3500px; opacity: 0; }
+            100% { top: -4500px; opacity: 0; }
+        }
+        
+        #intro-ui {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 1500; pointer-events: none; display: none;
         }
         #skip-intro {
-            position: absolute; bottom: 30px; right: 30px;
+            position: absolute; bottom: 60px; right: 40px;
             background: #00b06f; color: white;
-            border: none; padding: 15px 30px; border-radius: 50px;
-            cursor: pointer; z-index: 1100; font-weight: bold;
-            text-transform: uppercase; letter-spacing: 1px;
-            box-shadow: 0 5px 15px rgba(0,176,111,0.5);
+            border: 3px solid white; padding: 15px 25px; border-radius: 50px;
+            cursor: pointer; pointer-events: auto; font-weight: 900;
+            text-transform: uppercase; letter-spacing: 2px;
+            box-shadow: 0 10px 30px rgba(0,176,111,0.7);
             -webkit-tap-highlight-color: transparent;
+            font-size: 1.1rem;
         }
 
         #start-overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: radial-gradient(circle at center, #222 0%, #050505 100%);
             display: flex; flex-direction: column; justify-content: center; align-items: center;
-            color: white; z-index: 500; text-align: center; padding: 20px; box-sizing: border-box;
+            color: white; z-index: 3000; text-align: center; padding: 20px; box-sizing: border-box;
         }
         .btn-start {
-            padding: 20px 60px; background: #00b06f; color: white;
+            padding: 22px 50px; background: #00b06f; color: white;
             font-size: 1.6rem; font-weight: 900; border: none; border-radius: 50px;
             margin-top: 40px; cursor: pointer;
             box-shadow: 0 10px 40px rgba(0,176,111,0.6);
@@ -92,23 +97,23 @@
         
         #message {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            background: rgba(20, 0, 0, 0.95); color: #ff3333; padding: 50px; border-radius: 30px;
+            background: rgba(20, 0, 0, 0.98); color: #ff3333; padding: 40px; border-radius: 30px;
             text-align: center; display: none; border: 4px solid #ff3333;
-            z-index: 2000; pointer-events: auto; box-shadow: 0 0 120px rgba(255,0,0,0.7);
-            width: 90%; max-width: 450px; box-sizing: border-box; backdrop-filter: blur(10px);
+            z-index: 4000; pointer-events: auto; box-shadow: 0 0 120px rgba(255,0,0,0.7);
+            width: 85%; max-width: 450px; box-sizing: border-box; backdrop-filter: blur(10px);
         }
-        .fart-text { font-size: 4rem; margin: 0; animation: shake 0.15s infinite; font-weight: 900; }
-        .subtitle { font-size: 2.2rem; color: #fff; margin-top: 25px; font-weight: 800; font-style: italic; }
+        .fart-text { font-size: 3.5rem; margin: 0; animation: shake 0.15s infinite; font-weight: 900; }
+        .subtitle { font-size: 1.8rem; color: #fff; margin-top: 20px; font-weight: 800; font-style: italic; }
 
         @keyframes shake { 0% { transform: translate(4px, 4px); } 50% { transform: translate(-4px, -4px); } 100% { transform: translate(4px, -4px); } }
         
         #joystick-zone {
             position: absolute;
-            bottom: 40px; left: 40px;
-            width: 120px; height: 120px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 50%; border: 2px solid rgba(255, 255, 255, 0.3);
-            z-index: 150; touch-action: none;
+            bottom: 60px; left: 50px;
+            width: 110px; height: 110px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 50%; border: 3px solid rgba(255, 255, 255, 0.4);
+            z-index: 500; touch-action: none;
             display: none;
         }
         #joystick-knob {
@@ -119,17 +124,17 @@
             pointer-events: none; box-shadow: 0 0 15px rgba(0,0,0,0.5);
         }
 
-        .controls-hint { position: absolute; bottom: 20px; width: 100%; text-align: center; color: rgba(255,255,255,0.3); pointer-events: none; font-size: 0.8rem; text-transform: uppercase; z-index: 5; }
+        .controls-hint { position: absolute; bottom: 10px; width: 100%; text-align: center; color: rgba(255,255,255,0.25); pointer-events: none; font-size: 0.7rem; text-transform: uppercase; z-index: 5; }
     </style>
 </head>
 <body>
     <div id="canvas-container">
         <!-- Start Screen -->
         <div id="start-overlay">
-            <h1 style="font-size: 3.5rem; margin: 0; text-transform: uppercase; letter-spacing: 12px; color: #00b06f; font-weight: 900;">ESTHER</h1>
-            <h2 style="font-size: 1.1rem; font-weight: 300; letter-spacing: 6px; margin-bottom: 30px; color: #ff00ff;">ZONA EUROPA ULTIMATE SLAY ✨</h2>
-            <p style="font-size: 1.1rem; opacity: 0.8; max-width: 450px; line-height: 1.6;">
-                El e-commerce está bajo ataque. Thomas, solo tú puedes ayudar a Esther a salvar los KPIs del trimestre. 💅
+            <h1 style="font-size: 3rem; margin: 0; text-transform: uppercase; letter-spacing: 8px; color: #00b06f; font-weight: 900;">ESTHER</h1>
+            <h2 style="font-size: 1rem; font-weight: 300; letter-spacing: 4px; margin-bottom: 20px; color: #ff00ff;">ZONA EUROPA ULTIMATE SLAY ✨</h2>
+            <p style="font-size: 1rem; opacity: 0.8; max-width: 400px; line-height: 1.5;">
+                Thomas, el KPI está en peligro. <br>Ayuda a Esther a limpiar el stock lácteo. 💅
             </p>
             <button class="btn-start" id="start-button">CARGAR MISIÓN</button>
         </div>
@@ -150,23 +155,27 @@
                 <br>
                 <p>Si los lácteos te tocan, el servidor se cae y... bueno, ya sabes: Esther se cagó. ¡No permitas que arruinen tu chaleco de punto! SLAY, CARIÑO, ¡SLAY!</p>
             </div>
+        </div>
+
+        <!-- Dedicated Skip UI Layer -->
+        <div id="intro-ui">
             <button id="skip-intro">SALTAR INTRO 💅</button>
         </div>
 
         <div id="ui">
             <div style="width: 14px; height: 14px; background: #00ff88; border-radius: 50%; box-shadow: 0 0 15px #00ff88;"></div>
             <div>
-                <div style="font-size: 0.7rem; opacity: 0.8; text-transform: uppercase; letter-spacing: 2px;">Ventas Protegidas</div>
+                <div style="font-size: 0.7rem; opacity: 0.8; text-transform: uppercase; letter-spacing: 1px;">Ventas Protegidas</div>
                 <div class="score-display" id="score">0</div>
             </div>
         </div>
 
         <div id="weapon-selector">
             <div class="weapon-btn active" data-weapon="laser" title="Laser Lactasa">⚡</div>
-            <div class="weapon-btn" data-weapon="gloss" title="Granada de Gloss (AOE)">💄</div>
+            <div class="weapon-btn" data-weapon="gloss" title="Granada de Gloss">💄</div>
             <div class="weapon-btn" data-weapon="data" title="Stream de Datos">💾</div>
             <div class="weapon-btn" data-weapon="paper" title="Paperwork Q4">📊</div>
-            <div class="weapon-btn" data-weapon="vortex" title="Vórtice Viral (AOE)">
+            <div class="weapon-btn" data-weapon="vortex" title="Vórtice Viral">
                 🌟
                 <div id="vortex-cooldown" class="cooldown-overlay"></div>
             </div>
@@ -182,6 +191,8 @@
         </div>
     </div>
 
+    <div class="controls-hint">Joystick • Toca para destruir • 💄 y 🌟 son AoE</div>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
     <script>
@@ -195,6 +206,7 @@
         const startBtn = document.getElementById('start-button');
         const vortexOverlay = document.getElementById('vortex-cooldown');
         const introOverlay = document.getElementById('intro-overlay');
+        const introUILayer = document.getElementById('intro-ui');
         const skipBtn = document.getElementById('skip-intro');
         const weaponSelector = document.getElementById('weapon-selector');
         const uiOverlay = document.getElementById('ui');
@@ -249,7 +261,7 @@
                 if(speechSynth) {
                     speechSynth.cancel();
                     const u = new SpeechSynthesisUtterance(text);
-                    u.lang = 'es-ES'; u.rate = 0.90; u.pitch = 0.98;
+                    u.lang = 'es-ES'; u.rate = 0.90; u.pitch = 0.95;
                     const vs = speechSynth.getVoices();
                     u.voice = vs.find(v => v.lang.includes('es-ES') && (v.name.includes('Helena') || v.name.includes('Lucia'))) || vs.find(v => v.lang.includes('es')) || vs[0];
                     if (callback) u.onend = callback;
@@ -309,7 +321,7 @@
             vortex: new THREE.MeshBasicMaterial({ color: CONFIG.colors.vortex, transparent: true, opacity: 0.5, side: THREE.DoubleSide })
         };
 
-        // --- THREE.JS ---
+        // --- THREE.JS SCENE SETUP ---
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(CONFIG.colors.bg);
         scene.fog = new THREE.FogExp2(CONFIG.colors.bg, 0.015);
@@ -479,15 +491,17 @@
 
         function playIntro() {
             introOverlay.style.display = 'flex';
+            introUILayer.style.display = 'block'; 
             initStarfield();
             const introText = "Hace mucho tiempo en una instancia de Salesforce muy, muy lejana... ¡ZONA EUROPA! Cariño, escucha bien porque esto es una crisis de stock de nivel global. La Zona Europa ha sido invadida por lácteos que no sirven NADA de glamour. Para moverte y servir look por la oficina, usa el joystick o las teclas W A S D. ¡Esa melena tiene que estar en constante movimiento! Toca la pantalla para disparar. Tienes un arsenal de infarto: el Rayo Lactasa, la Granada de Gloss que hace daño en área, y el Vórtice Viral para cuando necesites una limpieza total cada quince segundos. Si los lácteos te tocan, el servidor se cae y... bueno, ya sabes: Esther se cagó. ¡No permitas que arruinen tu chaleco de punto! Slay, cariño, ¡SLAY!";
             audio.speak(introText, () => { endIntro(); });
         }
 
         function endIntro() {
-            if (introOverlay.style.display === 'none') return;
+            if (introOverlay.style.display === 'none' && introUILayer.style.display === 'none') return;
             if (speechSynth) speechSynth.cancel();
             introOverlay.style.display = 'none';
+            introUILayer.style.display = 'none';
             uiOverlay.style.display = 'flex';
             weaponSelector.style.display = 'flex';
             joyZone.style.display = 'block';
@@ -499,8 +513,13 @@
             audio.init(); audioEnabled = true;
             playIntro();
         });
+        startBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            document.getElementById('start-overlay').style.display = 'none';
+            audio.init(); audioEnabled = true;
+            playIntro();
+        });
 
-        // Touchstart for mobile skip
         skipBtn.addEventListener('touchstart', (e) => { e.preventDefault(); endIntro(); });
         skipBtn.addEventListener('click', endIntro);
 
@@ -531,16 +550,33 @@
             btn.classList.add('active'); currentWeapon = btn.dataset.weapon;
         }
 
-        joyZone.addEventListener('touchstart', (e) => { e.preventDefault(); joystick.active = true; updateJoy(e.touches[0]); }, {passive:false});
-        joyZone.addEventListener('touchmove', (e) => { e.preventDefault(); if(joystick.active) updateJoy(e.touches[0]); }, {passive:false});
-        joyZone.addEventListener('touchend', (e) => { e.preventDefault(); joystick.active = false; joystick.x = 0; joystick.y = 0; joyKnob.style.transform = `translate(-50%,-50%)`; }, {passive:false});
+        // IMPROVED JOYSTICK LOGIC
+        joyZone.addEventListener('touchstart', (e) => { 
+            e.preventDefault(); 
+            joystick.active = true; 
+            updateJoy(e.touches[0]); 
+        }, {passive:false});
+
+        joyZone.addEventListener('touchmove', (e) => { 
+            e.preventDefault(); 
+            if(joystick.active) updateJoy(e.touches[0]); 
+        }, {passive:false});
+
+        joyZone.addEventListener('touchend', (e) => { 
+            e.preventDefault(); 
+            joystick.active = false; 
+            joystick.x = 0; joystick.y = 0; 
+            joyKnob.style.transform = `translate(-50%,-50%)`; 
+        }, {passive:false});
+
         function updateJoy(t) {
             const r = joyZone.getBoundingClientRect(), cx = r.left + r.width/2, cy = r.top + r.height/2;
             let dx = t.clientX - cx, dy = t.clientY - cy;
-            const dist = Math.min(Math.sqrt(dx*dx+dy*dy), 40);
+            const dist = Math.min(Math.sqrt(dx*dx+dy*dy), 50);
             const ang = Math.atan2(dy, dx);
-            joyKnob.style.transform = `translate(calc(-50% + ${Math.cos(ang)*dist}px), calc(-50% + ${Math.sin(ang)*dist}px))`;
-            joystick.x = Math.cos(ang) * (dist/40); joystick.y = Math.sin(ang) * (dist/40);
+            joyKnob.style.transform = `translate(calc(-50% + ${(dx/Math.sqrt(dx*dx+dy*dy))*dist}px), calc(-50% + ${(dy/Math.sqrt(dx*dx+dy*dy))*dist}px))`;
+            joystick.x = (dx/Math.sqrt(dx*dx+dy*dy)) * (dist/50); 
+            joystick.y = (dy/Math.sqrt(dx*dx+dy*dy)) * (dist/50);
         }
 
         window.addEventListener('keydown', (e) => { const k = e.key.toLowerCase(); if(k==='w'||k==='arrowup') keys.w=1; if(k==='s'||k==='arrowdown') keys.s=1; if(k==='a'||k==='arrowleft') keys.a=1; if(k==='d'||k==='arrowright') keys.d=1; });
@@ -550,11 +586,9 @@
         container.addEventListener('touchstart', (e) => {
             const touch = e.touches[0];
             const rect = joyZone.getBoundingClientRect();
-            // Evitar disparar si se toca el joystick o botones de armas
             if (touch.clientX >= rect.left && touch.clientX <= rect.right && touch.clientY >= rect.top && touch.clientY <= rect.bottom) return;
             const wRect = weaponSelector.getBoundingClientRect();
             if (touch.clientY >= wRect.top) return;
-
             if(!gameActive && messageBox.style.display === 'block') resetGame();
             else if (gameActive) handleInput(touch.clientX, touch.clientY);
         });
@@ -586,7 +620,7 @@
                 frameCount++;
                 if (frameCount % Math.floor(spawnRate) === 0) spawnEnemy();
                 let mx = joystick.active ? joystick.x : (keys.d - keys.a), mz = joystick.active ? joystick.y : (keys.s - keys.w);
-                if (Math.abs(mx) > 0.1 || Math.abs(mz) > 0.1) {
+                if (Math.abs(mx) > 0.05 || Math.abs(mz) > 0.05) {
                     esther.position.x += mx * CONFIG.moveSpeed; esther.position.z += mz * CONFIG.moveSpeed;
                     if(armAnimationState === 0) esther.rotation.y = Math.atan2(mx, mz);
                     legAnimationTime += 0.35; parts.legL.rotation.x = Math.sin(legAnimationTime)*0.7; parts.legR.rotation.x = Math.cos(legAnimationTime)*0.7;
