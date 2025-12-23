@@ -8,7 +8,7 @@
         body { margin: 0; overflow: hidden; background-color: #050505; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; touch-action: none; user-select: none; -webkit-user-select: none; }
         #canvas-container { width: 100vw; height: 100vh; position: relative; overflow: hidden; }
         
-        /* UI Game Elements */
+        /* UI Game Elements - Sophisticated Glassmorphism */
         #ui {
             position: absolute; top: 40px; left: 20px;
             color: white; background: rgba(0, 0, 0, 0.6);
@@ -138,7 +138,6 @@
 </head>
 <body>
     <div id="canvas-container">
-        <!-- Start Screen -->
         <div id="start-overlay">
             <h1 style="font-size: 3rem; margin: 0; text-transform: uppercase; letter-spacing: 12px; color: #00b06f; font-weight: 900;">ESTHER</h1>
             <h2 style="font-size: 1rem; font-weight: 300; letter-spacing: 5px; margin-bottom: 30px; color: #ff00ff;">ZONA EUROPA EXECUTIVE REALNESS ✨</h2>
@@ -148,7 +147,6 @@
             <button class="btn-start" id="start-button">CARGAR MISIÓN</button>
         </div>
 
-        <!-- Star Wars Intro -->
         <div id="intro-overlay">
             <canvas id="starfield"></canvas>
             <div id="crawl-perspective">
@@ -204,14 +202,15 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
     <script>
-        // --- GLOBAL VARIABLES (TOP LEVEL INITIALIZATION) ---
+        // --- GLOBAL VARIABLES ---
         let scene, camera, renderer;
         let container, scoreBox, messageBox, nameTagLabel, joyZone, joyKnob, startBtn, vortexOverlay, introOverlay, skipLayer, skipBtn, weaponSelector, uiOverlay;
         let mats = {};
         
         // Game State
         let gameActive = false, score = 0, currentWeapon = 'laser', zoomLevel = 1.0;
-        let enemies = [], particles = [], effects = [], joystick = { active: false, x: 0, y: 0 };
+        let enemies = [], particles = [], effects = [], collidables = [];
+        let joystick = { active: false, x: 0, y: 0 };
         const keys = { w:0, a:0, s:0, d:0 };
         let armAnimationState = 0, legAnimationTime = 0, frameCount = 0;
         let lastVortexTime = 0, initialPinchDist = 0;
@@ -226,12 +225,14 @@
                 bg: 0x050505, beam: 0x00ff88, skin: 0xdabfa6, 
                 mustard: 0xca8c2a, 
                 mouth: 0xb22222,
-                hair: 0x221a15
+                hair: 0x221a15,
+                eyeshadow: 0x5a4d41,
+                blush: 0xffb2b2
             },
             vortexCooldownTime: 15000 
         };
 
-        // Audio Management
+        // --- AUDIO ENGINE ---
         let speechSynth = window.speechSynthesis;
         const audio = {
             ctx: null,
@@ -252,10 +253,8 @@
                     window.speechSynthesis.cancel();
                     const u = new SpeechSynthesisUtterance(text);
                     u.lang = 'es-ES'; u.rate = 0.95; u.pitch = 1.0;
-                    const vs = speechSynth.getVoices();
-                    u.voice = vs.find(v => v.lang.includes('es-ES') && (v.name.includes('Helena') || v.name.includes('Lucia'))) || vs.find(v => v.lang.includes('es')) || vs[0];
                     if (callback) u.onend = callback;
-                    speechSynth.speak(u);
+                    window.speechSynthesis.speak(u);
                 }
             }
         };
@@ -314,7 +313,7 @@
             }
         };
 
-        // --- CORE FUNCTIONS ---
+        // --- INIT FUNCTIONS ---
         function initGlobalSelectors() {
             container = document.getElementById('canvas-container');
             scoreBox = document.getElementById('score');
@@ -367,28 +366,39 @@
             const puffGeo = new THREE.SphereGeometry(0.38, 16, 16);
             const puffL = new THREE.Mesh(puffGeo, mats.sweater); puffL.position.set(-0.55, 1.1, 0); torso.add(puffL);
             const puffR = new THREE.Mesh(puffGeo, mats.sweater); puffR.position.set(0.55, 1.1, 0); torso.add(puffR);
-
+            const armGeo = new THREE.BoxGeometry(0.24, 1, 0.24);
             const rArmGroup = new THREE.Group(); rArmGroup.position.set(0.6, 1.1, 0);
-            const rArmM = new THREE.Mesh(new THREE.BoxGeometry(0.24, 1, 0.24), mats.sweater); rArmM.position.y = -0.5; rArmGroup.add(rArmM);
+            const rArmM = new THREE.Mesh(armGeo, mats.sweater); rArmM.position.y = -0.5; rArmGroup.add(rArmM);
             const rHand = new THREE.Mesh(new THREE.SphereGeometry(0.12), mats.skin); rHand.position.y = -1.0; rArmGroup.add(rHand);
             torso.add(rArmGroup); bodyParts.armR = rArmGroup;
-
             const lArmGroup = new THREE.Group(); lArmGroup.position.set(-0.6, 1.1, 0);
             const lArmM = new THREE.Mesh(new THREE.BoxGeometry(0.24, 1, 0.24), mats.sweater); lArmM.position.y = -0.5; lArmGroup.add(lArmM);
             const lHand = new THREE.Mesh(new THREE.SphereGeometry(0.12), mats.skin); lHand.position.y = -1.0; lArmGroup.add(lHand);
             torso.add(lArmGroup); bodyParts.armL = lArmGroup;
             esther.add(torso);
 
-            // HEAD & FACE (The fix!)
+            // HEAD & FACE (Makeup fix!)
             const head = new THREE.Group(); head.position.y = 2.8;
             const skull = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.6, 24), mats.skin); head.add(skull);
             
-            // Eyes (Set forward at 0.31)
+            // Eyes
             const eyeGeo = new THREE.SphereGeometry(0.045, 8, 8);
             const eyeL = new THREE.Mesh(eyeGeo, new THREE.MeshBasicMaterial({color:0x000})); eyeL.position.set(-0.11, 0.15, 0.31); head.add(eyeL);
             const eyeR = eyeL.clone(); eyeR.position.set(0.11, 0.15, 0.31); head.add(eyeR);
             
-            // Mouth (Lipstick Red)
+            // Subtle Eyeshadow (Makeup)
+            const shadowGeo = new THREE.PlaneGeometry(0.14, 0.05);
+            const shadowMat = new THREE.MeshBasicMaterial({color: CONFIG.colors.eyeshadow, transparent: true, opacity: 0.5});
+            const shadowL = new THREE.Mesh(shadowGeo, shadowMat); shadowL.position.set(-0.11, 0.21, 0.32); head.add(shadowL);
+            const shadowR = shadowL.clone(); shadowR.position.set(0.11, 0.21, 0.32); head.add(shadowR);
+
+            // Blush (Makeup)
+            const blushGeo = new THREE.CircleGeometry(0.06, 16);
+            const blushMat = new THREE.MeshBasicMaterial({color: CONFIG.colors.blush, transparent: true, opacity: 0.4});
+            const blushL = new THREE.Mesh(blushGeo, blushMat); blushL.position.set(-0.18, 0, 0.32); head.add(blushL);
+            const blushR = blushL.clone(); blushR.position.set(0.18, 0, 0.32); head.add(blushR);
+
+            // Mouth
             const mouth = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.06, 0.02), new THREE.MeshBasicMaterial({color:CONFIG.colors.mouth})); mouth.position.set(0, -0.1, 0.32); head.add(mouth);
             
             // Bun
@@ -404,18 +414,28 @@
         }
 
         function buildOffice() {
+            collidables = [];
             const floor = new THREE.Mesh(new THREE.PlaneGeometry(120, 120), mats.floor); floor.rotation.x = -Math.PI/2; floor.receiveShadow = true; scene.add(floor);
             const deskPositions = [[-20,-15], [20,-15], [-20,15], [20,15], [0, -30]];
             deskPositions.forEach(p => {
                 const d = new THREE.Mesh(new THREE.BoxGeometry(11, 0.25, 5), new THREE.MeshStandardMaterial({color:0x2b1d14, roughness:0.6})); d.position.set(p[0], 1.6, p[1]); d.castShadow = true; scene.add(d);
+                // Create a collision box for the desk area (slightly larger)
+                const box = new THREE.Box3().setFromCenterAndSize(new THREE.Vector3(p[0], 1, p[1]), new THREE.Vector3(11.5, 5, 5.5));
+                collidables.push(box);
                 const screen = new THREE.Mesh(new THREE.PlaneGeometry(3.0, 1.9), new THREE.MeshBasicMaterial({color:0x00aaff, emissive: 0x00aaff, emissiveIntensity: 0.5})); screen.position.set(p[0], 3.3, p[1]-1.75); scene.add(screen);
             });
+            // Decor on walls
+            const wallPlane = new THREE.Mesh(new THREE.PlaneGeometry(10, 5), new THREE.MeshBasicMaterial({map: TextureStudio.generateKnit('#fff'), side: THREE.DoubleSide})); // Placeholder for poster
+            wallPlane.position.set(0, 10, -44); scene.add(wallPlane);
         }
 
+        // --- GAMEPLAY ---
         function createDairy(type) {
             let group = new THREE.Group();
             if (type === 'cheese') {
-                const wheel = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.2, 0.6, 24), mats.cheese); wheel.rotation.x = Math.PI/2; group.add(wheel);
+                const wheel = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.2, 0.6, 24), mats.cheese); 
+                // Face up: cylinder default is upright (flat side on top/bottom)
+                group.add(wheel);
             } else if (type === 'milk') {
                 const box = new THREE.Mesh(new THREE.BoxGeometry(1, 2.2, 1), mats.milk); group.add(box);
             } else if (type === 'butter') {
@@ -519,21 +539,13 @@
             joystick.x = (dx/Math.sqrt(dx*dx+dy*dy || 1)) * (dist/40); joystick.y = (dy/Math.sqrt(dx*dx+dy*dy || 1)) * (dist/40);
         }
 
-        function handleInput(clientX, clientY) {
-            const raycaster = new THREE.Raycaster(), mouseV = new THREE.Vector2();
-            mouseV.x = (clientX / window.innerWidth) * 2 - 1; mouseV.y = -(clientY / window.innerHeight) * 2 + 1;
-            raycaster.setFromCamera(mouseV, camera);
-            if(currentWeapon === 'vortex') { fireWeapon(new THREE.Vector3()); return; }
-            const intersects = raycaster.intersectObjects(scene.children, true);
-            for(let hit of intersects) {
-                const idx = enemies.findIndex(e => e && !e.markForDeletion && (e.mesh === hit.object || e.mesh.children.includes(hit.object)));
-                if(idx > -1) {
-                    esther.rotation.y = Math.atan2(enemies[idx].mesh.position.x - esther.position.x, enemies[idx].mesh.position.z - esther.position.z);
-                    fireWeapon(enemies[idx].mesh.position);
-                    if(currentWeapon!=='gloss') enemies[idx].destroy();
-                    return;
-                }
+        // --- ANIMATION ---
+        function checkCollision(x, z) {
+            const playerBox = new THREE.Box3().setFromCenterAndSize(new THREE.Vector3(x, 1, z), new THREE.Vector3(1, 2, 1));
+            for(let box of collidables) {
+                if (playerBox.intersectsBox(box)) return true;
             }
+            return false;
         }
 
         function animate() {
@@ -543,7 +555,10 @@
                 if (frameCount % 60 === 0) spawnEnemy();
                 let mx = joystick.active ? joystick.x : (keys.d - keys.a), mz = joystick.active ? joystick.y : (keys.s - keys.w);
                 if (Math.abs(mx) > 0.05 || Math.abs(mz) > 0.05) {
-                    esther.position.x += mx * CONFIG.moveSpeed; esther.position.z += mz * CONFIG.moveSpeed;
+                    const nextX = esther.position.x + mx * CONFIG.moveSpeed;
+                    const nextZ = esther.position.z + mz * CONFIG.moveSpeed;
+                    if (!checkCollision(nextX, esther.position.z)) esther.position.x = nextX;
+                    if (!checkCollision(esther.position.x, nextZ)) esther.position.z = nextZ;
                     esther.rotation.y = Math.atan2(mx, mz);
                     legAnimationTime += 0.35; bodyParts.legL.rotation.x = Math.sin(legAnimationTime)*0.7; bodyParts.legR.rotation.x = Math.cos(legAnimationTime)*0.7;
                 } else { bodyParts.legL.rotation.x = THREE.MathUtils.lerp(bodyParts.legL.rotation.x, 0, 0.2); bodyParts.legR.rotation.x = THREE.MathUtils.lerp(bodyParts.legR.rotation.x, 0, 0.2); }
@@ -558,8 +573,27 @@
                         e.dropProgress += 0.04; e.mesh.position.y = THREE.MathUtils.lerp(25, e.targetY, Math.min(e.dropProgress, 1.0));
                         if(e.dropProgress >= 1.0) e.dropping = false;
                     } else {
-                        const d = t.clone().sub(e.mesh.position).normalize();
-                        e.mesh.position.add(d.multiplyScalar(e.speed)); e.mesh.lookAt(t);
+                        const dir = t.clone().sub(e.mesh.position).normalize();
+                        const nextPos = e.mesh.position.clone().add(dir.multiplyScalar(e.speed));
+                        const enemyBox = new THREE.Box3().setFromCenterAndSize(nextPos, new THREE.Vector3(1.5, 2, 1.5));
+                        let collide = false;
+                        for(let box of collidables) if(enemyBox.intersectsBox(box)) collide = true;
+                        
+                        if(!collide) { e.mesh.position.copy(nextPos); }
+                        else {
+                            const slideX = e.mesh.position.clone().add(new THREE.Vector3(dir.x, 0, 0).multiplyScalar(e.speed));
+                            const boxX = new THREE.Box3().setFromCenterAndSize(slideX, new THREE.Vector3(1.5, 2, 1.5));
+                            let hitX = false; for(let b of collidables) if(boxX.intersectsBox(b)) hitX = true;
+                            if(!hitX) e.mesh.position.x = slideX.x;
+                            else {
+                                const slideZ = e.mesh.position.clone().add(new THREE.Vector3(0, 0, dir.z).multiplyScalar(e.speed));
+                                const boxZ = new THREE.Box3().setFromCenterAndSize(slideZ, new THREE.Vector3(1.5, 2, 1.5));
+                                let hitZ = false; for(let b of collidables) if(boxZ.intersectsBox(b)) hitZ = true;
+                                if(!hitZ) e.mesh.position.z = slideZ.z;
+                            }
+                        }
+
+                        e.mesh.lookAt(t);
                         if (e.mesh.position.distanceTo(t) < 1.6) { gameActive = false; document.getElementById('message').style.display = 'block'; audio.speak("Esther se cagó"); }
                     }
                 }
@@ -578,12 +612,10 @@
                     if(ef.life <= 0) { scene.remove(ef.mesh); effects.splice(i, 1); }
                 }
             }
-            if(camera && esther) {
-                camera.position.lerp(esther.position.clone().add(CONFIG.cameraDefaults.offset.clone().multiplyScalar(zoomLevel)), 0.12);
-                camera.lookAt(esther.position);
-            }
-            if (bodyParts.armR && armAnimationState > 0) { bodyParts.armR.rotation.x = THREE.MathUtils.lerp(bodyParts.armR.rotation.x, -Math.PI/2, 0.4); armAnimationState--; }
-            else if (bodyParts.armR) { bodyParts.armR.rotation.x = THREE.MathUtils.lerp(bodyParts.armR.rotation.x, 0, 0.1); }
+            camera.position.lerp(esther.position.clone().add(CONFIG.cameraDefaults.offset.clone().multiplyScalar(zoomLevel)), 0.12);
+            camera.lookAt(esther.position);
+            if (armAnimationState > 0) { bodyParts.armR.rotation.x = THREE.MathUtils.lerp(bodyParts.armR.rotation.x, -Math.PI/2, 0.4); armAnimationState--; }
+            else { bodyParts.armR.rotation.x = THREE.MathUtils.lerp(bodyParts.armR.rotation.x, 0, 0.1); }
             for (let i = particles.length-1; i >= 0; i--) { const p = particles[i]; p.mesh.position.add(p.vel); p.life -= 0.04; if(p.life <= 0) { scene.remove(p.mesh); particles.splice(i, 1); } else { p.mesh.scale.setScalar(p.life); p.mesh.material.opacity = p.life; } }
             if (gameActive && nameTagLabel && esther && camera) { 
                 const headPos = new THREE.Vector3(0, 4.2, 0); headPos.applyMatrix4(esther.matrixWorld); headPos.project(camera); 
@@ -593,19 +625,41 @@
             renderer.render(scene, camera);
         }
 
-        // --- ONLOAD ---
+        function handleInput(clientX, clientY) {
+            const raycaster = new THREE.Raycaster(), mouseV = new THREE.Vector2();
+            mouseV.x = (clientX / window.innerWidth) * 2 - 1; mouseV.y = -(clientY / window.innerHeight) * 2 + 1;
+            raycaster.setFromCamera(mouseV, camera);
+            if(currentWeapon === 'vortex') { fireWeapon(new THREE.Vector3()); return; }
+            const intersects = raycaster.intersectObjects(scene.children, true);
+            for(let hit of intersects) {
+                const idx = enemies.findIndex(e => e && !e.markForDeletion && (e.mesh === hit.object || e.mesh.children.includes(hit.object)));
+                if(idx > -1) {
+                    esther.rotation.y = Math.atan2(enemies[idx].mesh.position.x - esther.position.x, enemies[idx].mesh.position.z - esther.position.z);
+                    fireWeapon(enemies[idx].mesh.position);
+                    if(currentWeapon!=='gloss') enemies[idx].destroy();
+                    return;
+                }
+            }
+        }
+
+        // --- FINAL INIT ---
         window.onload = () => {
             initGlobalSelectors();
             
+            // 1. Create Scene & Camera & Renderer first
             scene = new THREE.Scene();
+            scene.background = new THREE.Color(CONFIG.colors.bg);
+            scene.fog = new THREE.FogExp2(CONFIG.colors.bg, 0.015);
             camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
             renderer = new THREE.WebGLRenderer({ antialias: true });
-
+            
+            // 2. Set Size
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.shadowMap.enabled = true;
             renderer.shadowMap.type = THREE.PCFSoftShadowMap;
             container.appendChild(renderer.domElement);
 
+            // 3. Build World
             initMaterials();
             buildEsther();
             buildOffice();
@@ -613,26 +667,15 @@
             scene.add(new THREE.AmbientLight(0xffffff, 1.2));
             const dir = new THREE.DirectionalLight(0xffffff, 1.2); dir.position.set(20, 50, 20); dir.castShadow = true; scene.add(dir);
 
-            // Handlers
+            // 4. Handlers
             startBtn.addEventListener('click', () => { document.getElementById('start-overlay').style.display='none'; audio.init(); audioEnabled=true; playIntro(); });
             startBtn.addEventListener('touchstart', (e) => { e.preventDefault(); document.getElementById('start-overlay').style.display='none'; audio.init(); audioEnabled=true; playIntro(); });
-            skipBtn.addEventListener('click', endIntro);
             skipBtn.addEventListener('touchstart', (e) => { e.preventDefault(); endIntro(); });
+            skipBtn.addEventListener('click', endIntro);
             
-            joyZone.addEventListener('touchstart', (e) => { e.preventDefault(); joystick.active=true; 
-                const update = (t) => {
-                    const r = joyZone.getBoundingClientRect(), cx = r.left + r.width/2, cy = r.top + r.height/2;
-                    const dx = t.clientX - cx, dy = t.clientY - cy;
-                    const dist = Math.min(Math.sqrt(dx*dx+dy*dy), 40); const ang = Math.atan2(dy, dx);
-                    joyKnob.style.transform = `translate(calc(-50% + ${(dx/Math.sqrt(dx*dx+dy*dy || 1))*dist}px), calc(-50% + ${(dy/Math.sqrt(dx*dx+dy*dy || 1))*dist}px))`;
-                    joystick.x = (dx/Math.sqrt(dx*dx+dy*dy || 1)) * (dist/40); joystick.y = (dy/Math.sqrt(dx*dx+dy*dy || 1)) * (dist/40);
-                };
-                update(e.touches[0]);
-                const mv = (me) => { me.preventDefault(); update(me.touches[0]); };
-                const up = (ue) => { ue.preventDefault(); joystick.active=false; joystick.x=0; joystick.y=0; joyKnob.style.transform=`translate(-50%,-50%)`; window.removeEventListener('touchmove', mv); window.removeEventListener('touchend', up); };
-                window.addEventListener('touchmove', mv, {passive:false});
-                window.addEventListener('touchend', up, {passive:false});
-            }, {passive:false});
+            joyZone.addEventListener('touchstart', (e) => { e.preventDefault(); joystick.active=true; updateJoy(e.touches[0]); }, {passive:false});
+            joyZone.addEventListener('touchmove', (e) => { e.preventDefault(); if(joystick.active) updateJoy(e.touches[0]); }, {passive:false});
+            joyZone.addEventListener('touchend', (e) => { e.preventDefault(); joystick.active=false; joystick.x=0; joystick.y=0; joyKnob.style.transform=`translate(-50%,-50%)`; }, {passive:false});
             
             container.addEventListener('touchstart', (e) => { if (e.touches.length === 2) initialPinchDist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY); }, {passive: false});
             container.addEventListener('touchmove', (e) => {
@@ -642,15 +685,18 @@
                     initialPinchDist = dist;
                 }
             }, {passive: false});
+
             window.addEventListener('keydown', (e) => { const k = e.key.toLowerCase(); if(k==='w') keys.w=1; if(k==='s') keys.s=1; if(k==='a') keys.a=1; if(k==='d') keys.d=1; });
             window.addEventListener('keyup', (e) => { const k = e.key.toLowerCase(); if(k==='w') keys.w=0; if(k==='s') keys.s=0; if(k==='a') keys.a=0; if(k==='d') keys.d=0; });
             window.addEventListener('wheel', (e) => { zoomLevel = THREE.MathUtils.clamp(zoomLevel + e.deltaY * 0.001, CONFIG.cameraDefaults.minZoom, CONFIG.cameraDefaults.maxZoom); });
+            
             container.addEventListener('pointerdown', (e) => {
                 if (!gameActive) { if(messageBox.style.display === 'block') resetGame(); return; }
                 const r = joyZone.getBoundingClientRect();
                 if (e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top) return;
                 handleInput(e.clientX, e.clientY);
             });
+            
             document.querySelectorAll('.weapon-btn').forEach(btn => btn.addEventListener('click', () => { 
                 document.querySelectorAll('.weapon-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); currentWeapon = btn.dataset.weapon; 
             }));
