@@ -20,26 +20,30 @@
         }
         .score-display { font-size: 1.5rem; color: #4fffa6; font-weight: 800; font-family: 'Courier New', monospace; }
         
+        /* WEAPON SELECTOR - RIGHT SIDE VERTICAL */
         #weapon-selector {
-            position: absolute; bottom: 35px; left: 50%;
-            transform: translateX(-50%);
-            display: none; gap: 8px;
+            position: absolute; 
+            top: 50%; right: 20px; /* Moved to right */
+            transform: translateY(-50%); /* Center vertically */
+            display: none; 
+            flex-direction: column; /* Vertical layout */
+            gap: 12px;
             background: rgba(0,0,0,0.7);
-            padding: 8px; border-radius: 20px;
+            padding: 12px; border-radius: 20px;
             border: 1px solid rgba(255,255,255,0.1);
             z-index: 600; backdrop-filter: blur(8px);
         }
         .weapon-btn {
-            width: 48px; height: 48px;
+            width: 55px; height: 55px;
             border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);
             background: rgba(40,40,40,0.8); color: white;
-            font-size: 1.3rem; display: flex; align-items: center; justify-content: center;
+            font-size: 1.5rem; display: flex; align-items: center; justify-content: center;
             cursor: pointer; position: relative; overflow: hidden;
             transition: all 0.2s; -webkit-tap-highlight-color: transparent;
         }
         .weapon-btn.active {
             border-color: #00b06f; background: rgba(0, 68, 34, 0.8);
-            box-shadow: 0 0 12px #00b06f; transform: scale(1.1) translateY(-3px);
+            box-shadow: 0 0 12px #00b06f; transform: scale(1.1);
         }
         .cooldown-overlay { position: absolute; bottom: 0; left: 0; width: 100%; height: 0%; background: rgba(255, 0, 255, 0.4); z-index: 1; pointer-events: none; }
 
@@ -68,14 +72,15 @@
             100% { top: -4500px; }
         }
         
+        /* SKIP BUTTON - MOVED TO SAFE AREA */
         #skip-layer {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 3000; pointer-events: none; display: none;
+            z-index: 9999; pointer-events: none; display: none;
         }
         #skip-intro {
-            position: absolute; bottom: 45px; right: 25px;
+            position: absolute; top: 40px; right: 20px; /* Top right is safer on mobile */
             background: #00b06f; color: white;
-            border: 2px solid white; padding: 12px 22px; border-radius: 50px;
+            border: 2px solid white; padding: 12px 25px; border-radius: 50px;
             cursor: pointer; pointer-events: auto; font-weight: 900;
             text-transform: uppercase; letter-spacing: 1px;
             font-size: 0.9rem; box-shadow: 0 10px 20px rgba(0,176,111,0.5);
@@ -109,19 +114,21 @@
 
         @keyframes shake { 0% { transform: translate(3px, 3px); } 50% { transform: translate(-3px, -3px); } 100% { transform: translate(3px, -3px); } }
         
+        /* DYNAMIC JOYSTICK - Hidden by default, position absolute */
         #joystick-zone {
-            position: absolute; bottom: 45px; left: 45px;
-            width: 110px; height: 110px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 50%; border: 3px solid rgba(255, 255, 255, 0.2);
+            position: absolute; 
+            width: 120px; height: 120px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 50%; border: 2px solid rgba(255, 255, 255, 0.3);
             z-index: 700; touch-action: none; display: none;
+            pointer-events: none; /* Let touches pass through to tracking */
         }
         #joystick-knob {
             width: 50px; height: 50px;
             background: #00b06f; border-radius: 50%;
             position: absolute; top: 50%; left: 50%;
             transform: translate(-50%, -50%);
-            pointer-events: none; box-shadow: 0 0 15px rgba(0,0,0,0.6);
+            box-shadow: 0 0 15px rgba(0,0,0,0.6);
         }
 
         #name-tag-label {
@@ -210,7 +217,8 @@
         // Game State
         let gameActive = false, score = 0, currentWeapon = 'laser', zoomLevel = 1.0;
         let enemies = [], particles = [], effects = [], collidables = [];
-        let joystick = { active: false, x: 0, y: 0 };
+        // Dynamic joystick state
+        let joystick = { active: false, x: 0, y: 0, originX: 0, originY: 0, touchId: null };
         const keys = { w:0, a:0, s:0, d:0 };
         let armAnimationState = 0, legAnimationTime = 0, frameCount = 0;
         let lastVortexTime = 0, initialPinchDist = 0;
@@ -225,14 +233,12 @@
                 bg: 0x050505, beam: 0x00ff88, skin: 0xdabfa6, 
                 mustard: 0xca8c2a, 
                 mouth: 0xb22222,
-                hair: 0x221a15,
-                eyeshadow: 0x5a4d41,
-                blush: 0xffb2b2
+                hair: 0x221a15
             },
             vortexCooldownTime: 15000 
         };
 
-        // --- AUDIO ENGINE ---
+        // Audio Management
         let speechSynth = window.speechSynthesis;
         const audio = {
             ctx: null,
@@ -377,35 +383,14 @@
             torso.add(lArmGroup); bodyParts.armL = lArmGroup;
             esther.add(torso);
 
-            // HEAD & FACE (Makeup fix!)
             const head = new THREE.Group(); head.position.y = 2.8;
             const skull = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.6, 24), mats.skin); head.add(skull);
-            
-            // Eyes
             const eyeGeo = new THREE.SphereGeometry(0.045, 8, 8);
             const eyeL = new THREE.Mesh(eyeGeo, new THREE.MeshBasicMaterial({color:0x000})); eyeL.position.set(-0.11, 0.15, 0.31); head.add(eyeL);
             const eyeR = eyeL.clone(); eyeR.position.set(0.11, 0.15, 0.31); head.add(eyeR);
-            
-            // Subtle Eyeshadow (Makeup)
-            const shadowGeo = new THREE.PlaneGeometry(0.14, 0.05);
-            const shadowMat = new THREE.MeshBasicMaterial({color: CONFIG.colors.eyeshadow, transparent: true, opacity: 0.5});
-            const shadowL = new THREE.Mesh(shadowGeo, shadowMat); shadowL.position.set(-0.11, 0.21, 0.32); head.add(shadowL);
-            const shadowR = shadowL.clone(); shadowR.position.set(0.11, 0.21, 0.32); head.add(shadowR);
-
-            // Blush (Makeup)
-            const blushGeo = new THREE.CircleGeometry(0.06, 16);
-            const blushMat = new THREE.MeshBasicMaterial({color: CONFIG.colors.blush, transparent: true, opacity: 0.4});
-            const blushL = new THREE.Mesh(blushGeo, blushMat); blushL.position.set(-0.18, 0, 0.32); head.add(blushL);
-            const blushR = blushL.clone(); blushR.position.set(0.18, 0, 0.32); head.add(blushR);
-
-            // Mouth
             const mouth = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.06, 0.02), new THREE.MeshBasicMaterial({color:CONFIG.colors.mouth})); mouth.position.set(0, -0.1, 0.32); head.add(mouth);
-            
-            // Bun
             const bun = new THREE.Mesh(new THREE.SphereGeometry(0.32), new THREE.MeshStandardMaterial({color:CONFIG.colors.hair})); bun.position.set(0, 0.3, -0.2); head.add(bun);
             esther.add(head);
-
-            // Lanyard
             const lanyard = new THREE.Mesh(new THREE.TorusGeometry(0.55, 0.02, 4, 32, 3.8), new THREE.MeshStandardMaterial({color:0x111})); lanyard.position.set(0,1.95,0.08); lanyard.rotation.z=Math.PI; lanyard.scale.set(1,2.1,1); esther.add(lanyard);
             const badge = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.42, 0.03), new THREE.MeshStandardMaterial({color:0xffffff})); badge.position.set(0.15, 1.4, 0.42); badge.rotation.z=0.1; esther.add(badge);
 
@@ -419,23 +404,22 @@
             const deskPositions = [[-20,-15], [20,-15], [-20,15], [20,15], [0, -30]];
             deskPositions.forEach(p => {
                 const d = new THREE.Mesh(new THREE.BoxGeometry(11, 0.25, 5), new THREE.MeshStandardMaterial({color:0x2b1d14, roughness:0.6})); d.position.set(p[0], 1.6, p[1]); d.castShadow = true; scene.add(d);
-                // Create a collision box for the desk area (slightly larger)
                 const box = new THREE.Box3().setFromCenterAndSize(new THREE.Vector3(p[0], 1, p[1]), new THREE.Vector3(11.5, 5, 5.5));
                 collidables.push(box);
                 const screen = new THREE.Mesh(new THREE.PlaneGeometry(3.0, 1.9), new THREE.MeshBasicMaterial({color:0x00aaff, emissive: 0x00aaff, emissiveIntensity: 0.5})); screen.position.set(p[0], 3.3, p[1]-1.75); scene.add(screen);
             });
-            // Decor on walls
-            const wallPlane = new THREE.Mesh(new THREE.PlaneGeometry(10, 5), new THREE.MeshBasicMaterial({map: TextureStudio.generateKnit('#fff'), side: THREE.DoubleSide})); // Placeholder for poster
+            const wallPlane = new THREE.Mesh(new THREE.PlaneGeometry(10, 5), new THREE.MeshBasicMaterial({map: TextureStudio.generateKnit('#fff'), side: THREE.DoubleSide})); 
             wallPlane.position.set(0, 10, -44); scene.add(wallPlane);
         }
 
-        // --- GAMEPLAY ---
-        function createDairy(type) {
+        function spawnEnemy() {
+            const types = ['cheese', 'milk', 'butter', 'yogurt'];
+            const type = types[Math.floor(Math.random() * types.length)];
+            const angle = Math.random()*Math.PI*2, radius = 42; 
+            const x = Math.cos(angle)*radius, z = Math.sin(angle)*radius;
             let group = new THREE.Group();
             if (type === 'cheese') {
-                const wheel = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.2, 0.6, 24), mats.cheese); 
-                // Face up: cylinder default is upright (flat side on top/bottom)
-                group.add(wheel);
+                const wheel = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.2, 0.6, 24), mats.cheese); wheel.rotation.x = Math.PI/2; group.add(wheel);
             } else if (type === 'milk') {
                 const box = new THREE.Mesh(new THREE.BoxGeometry(1, 2.2, 1), mats.milk); group.add(box);
             } else if (type === 'butter') {
@@ -445,18 +429,9 @@
                 const lid = new THREE.Mesh(new THREE.CircleGeometry(0.72, 16), mats.silver);
                 lid.rotation.x = -Math.PI/2; lid.position.y = 0.41; group.add(cup); group.add(lid);
             }
-            return group;
-        }
-
-        function spawnEnemy() {
-            const types = ['cheese', 'milk', 'butter', 'yogurt'];
-            const type = types[Math.floor(Math.random() * types.length)];
-            const angle = Math.random()*Math.PI*2, radius = 42; 
-            const x = Math.cos(angle)*radius, z = Math.sin(angle)*radius;
-            const mesh = createDairy(type);
-            mesh.position.set(x, 25, z); mesh.castShadow = true; scene.add(mesh);
+            group.position.set(x, 25, z); group.castShadow = true; scene.add(group);
             const enemy = { 
-                mesh, speed: 0.12 + Math.random()*0.06, dropping: true, dropProgress: 0, targetY: 1, markForDeletion: false,
+                mesh: group, speed: 0.12 + Math.random()*0.06, dropping: true, dropProgress: 0, targetY: 1, markForDeletion: false,
                 destroy() {
                     this.markForDeletion = true;
                     triggerExplosion(this.mesh.position, currentWeapon==='vortex'? 0xff00ff : (currentWeapon==='gloss'? 0xff00cc : 0xffffff), true);
@@ -497,7 +472,9 @@
                 const ring = new THREE.Mesh(new THREE.TorusGeometry(1, 0.15, 16, 64), new THREE.MeshBasicMaterial({color: 0xff00ff, transparent:true, opacity:0.6}));
                 ring.rotation.x = Math.PI/2; ring.position.copy(esther.position); scene.add(ring);
                 effects.push({ mesh: ring, life: 1.0, type: 'vortex_ring', speed: 2.2 });
-                for(let i = enemies.length-1; i >= 0; i--) { if(enemies[i] && !enemies[i].markForDeletion && esther.position.distanceTo(enemies[i].mesh.position) < 22) enemies[i].destroy(); }
+                for(let i = enemies.length-1; i >= 0; i--) { 
+                    if(enemies[i] && !enemies[i].markForDeletion && esther.position.distanceTo(enemies[i].mesh.position) < 22) enemies[i].destroy(); 
+                }
             }
         }
 
@@ -512,7 +489,7 @@
             if (!introOverlay || introOverlay.style.display === 'none') return;
             window.speechSynthesis.cancel();
             introOverlay.style.display = 'none'; skipLayer.style.display = 'none';
-            uiOverlay.style.display = 'flex'; weaponSelector.style.display = 'flex'; joyZone.style.display = 'block';
+            uiOverlay.style.display = 'flex'; weaponSelector.style.display = 'flex'; 
             nameTagLabel.style.display = 'block'; gameActive = true; 
             resetGame();
         }
@@ -531,15 +508,6 @@
             draw();
         }
 
-        function updateJoy(t) {
-            const r = joyZone.getBoundingClientRect(), cx = r.left + r.width/2, cy = r.top + r.height/2;
-            let dx = t.clientX - cx, dy = t.clientY - cy;
-            const dist = Math.min(Math.sqrt(dx*dx+dy*dy), 40); const ang = Math.atan2(dy, dx);
-            joyKnob.style.transform = `translate(calc(-50% + ${(dx/Math.sqrt(dx*dx+dy*dy || 1))*dist}px), calc(-50% + ${(dy/Math.sqrt(dx*dx+dy*dy || 1))*dist}px))`;
-            joystick.x = (dx/Math.sqrt(dx*dx+dy*dy || 1)) * (dist/40); joystick.y = (dy/Math.sqrt(dx*dx+dy*dy || 1)) * (dist/40);
-        }
-
-        // --- ANIMATION ---
         function checkCollision(x, z) {
             const playerBox = new THREE.Box3().setFromCenterAndSize(new THREE.Vector3(x, 1, z), new THREE.Vector3(1, 2, 1));
             for(let box of collidables) {
@@ -548,12 +516,35 @@
             return false;
         }
 
+        function handleJoystick(t) {
+            if (!joystick.active) {
+                joystick.active = true;
+                joystick.originX = t.clientX; joystick.originY = t.clientY;
+                joyZone.style.display = 'block';
+                joyZone.style.left = (joystick.originX - 60) + 'px'; 
+                joyZone.style.top = (joystick.originY - 60) + 'px';
+                joyKnob.style.transform = `translate(-50%, -50%)`;
+                return;
+            }
+            const dx = t.clientX - joystick.originX;
+            const dy = t.clientY - joystick.originY;
+            const dist = Math.min(Math.sqrt(dx*dx+dy*dy), 50);
+            const ang = Math.atan2(dy, dx);
+            joyKnob.style.transform = `translate(calc(-50% + ${Math.cos(ang)*dist}px), calc(-50% + ${Math.sin(ang)*dist}px))`;
+            joystick.valX = (dx / (Math.sqrt(dx*dx+dy*dy) || 1)) * (dist / 50);
+            joystick.valY = (dy / (Math.sqrt(dx*dx+dy*dy) || 1)) * (dist / 50);
+        }
+
+        function resetJoystick() {
+            joystick.active = false; joystick.valX = 0; joystick.valY = 0; joyZone.style.display = 'none';
+        }
+
         function animate() {
             requestAnimationFrame(animate);
             if (gameActive) {
                 frameCount++;
                 if (frameCount % 60 === 0) spawnEnemy();
-                let mx = joystick.active ? joystick.x : (keys.d - keys.a), mz = joystick.active ? joystick.y : (keys.s - keys.w);
+                let mx = joystick.active ? joystick.valX : (keys.d - keys.a), mz = joystick.active ? joystick.valY : (keys.s - keys.w);
                 if (Math.abs(mx) > 0.05 || Math.abs(mz) > 0.05) {
                     const nextX = esther.position.x + mx * CONFIG.moveSpeed;
                     const nextZ = esther.position.z + mz * CONFIG.moveSpeed;
@@ -592,7 +583,6 @@
                                 if(!hitZ) e.mesh.position.z = slideZ.z;
                             }
                         }
-
                         e.mesh.lookAt(t);
                         if (e.mesh.position.distanceTo(t) < 1.6) { gameActive = false; document.getElementById('message').style.display = 'block'; audio.speak("Esther se cagó"); }
                     }
@@ -612,10 +602,12 @@
                     if(ef.life <= 0) { scene.remove(ef.mesh); effects.splice(i, 1); }
                 }
             }
-            camera.position.lerp(esther.position.clone().add(CONFIG.cameraDefaults.offset.clone().multiplyScalar(zoomLevel)), 0.12);
-            camera.lookAt(esther.position);
-            if (armAnimationState > 0) { bodyParts.armR.rotation.x = THREE.MathUtils.lerp(bodyParts.armR.rotation.x, -Math.PI/2, 0.4); armAnimationState--; }
-            else { bodyParts.armR.rotation.x = THREE.MathUtils.lerp(bodyParts.armR.rotation.x, 0, 0.1); }
+            if(camera && esther) {
+                camera.position.lerp(esther.position.clone().add(CONFIG.cameraDefaults.offset.clone().multiplyScalar(zoomLevel)), 0.12);
+                camera.lookAt(esther.position);
+            }
+            if (bodyParts.armR && armAnimationState > 0) { bodyParts.armR.rotation.x = THREE.MathUtils.lerp(bodyParts.armR.rotation.x, -Math.PI/2, 0.4); armAnimationState--; }
+            else if (bodyParts.armR) { bodyParts.armR.rotation.x = THREE.MathUtils.lerp(bodyParts.armR.rotation.x, 0, 0.1); }
             for (let i = particles.length-1; i >= 0; i--) { const p = particles[i]; p.mesh.position.add(p.vel); p.life -= 0.04; if(p.life <= 0) { scene.remove(p.mesh); particles.splice(i, 1); } else { p.mesh.scale.setScalar(p.life); p.mesh.material.opacity = p.life; } }
             if (gameActive && nameTagLabel && esther && camera) { 
                 const headPos = new THREE.Vector3(0, 4.2, 0); headPos.applyMatrix4(esther.matrixWorld); headPos.project(camera); 
@@ -642,24 +634,21 @@
             }
         }
 
-        // --- FINAL INIT ---
+        // --- ONLOAD ---
         window.onload = () => {
             initGlobalSelectors();
             
-            // 1. Create Scene & Camera & Renderer first
             scene = new THREE.Scene();
             scene.background = new THREE.Color(CONFIG.colors.bg);
             scene.fog = new THREE.FogExp2(CONFIG.colors.bg, 0.015);
             camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
             renderer = new THREE.WebGLRenderer({ antialias: true });
             
-            // 2. Set Size
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.shadowMap.enabled = true;
             renderer.shadowMap.type = THREE.PCFSoftShadowMap;
             container.appendChild(renderer.domElement);
 
-            // 3. Build World
             initMaterials();
             buildEsther();
             buildOffice();
@@ -667,22 +656,50 @@
             scene.add(new THREE.AmbientLight(0xffffff, 1.2));
             const dir = new THREE.DirectionalLight(0xffffff, 1.2); dir.position.set(20, 50, 20); dir.castShadow = true; scene.add(dir);
 
-            // 4. Handlers
             startBtn.addEventListener('click', () => { document.getElementById('start-overlay').style.display='none'; audio.init(); audioEnabled=true; playIntro(); });
             startBtn.addEventListener('touchstart', (e) => { e.preventDefault(); document.getElementById('start-overlay').style.display='none'; audio.init(); audioEnabled=true; playIntro(); });
-            skipBtn.addEventListener('touchstart', (e) => { e.preventDefault(); endIntro(); });
             skipBtn.addEventListener('click', endIntro);
+            skipBtn.addEventListener('touchstart', (e) => { e.preventDefault(); endIntro(); });
             
-            joyZone.addEventListener('touchstart', (e) => { e.preventDefault(); joystick.active=true; updateJoy(e.touches[0]); }, {passive:false});
-            joyZone.addEventListener('touchmove', (e) => { e.preventDefault(); if(joystick.active) updateJoy(e.touches[0]); }, {passive:false});
-            joyZone.addEventListener('touchend', (e) => { e.preventDefault(); joystick.active=false; joystick.x=0; joystick.y=0; joyKnob.style.transform=`translate(-50%,-50%)`; }, {passive:false});
-            
-            container.addEventListener('touchstart', (e) => { if (e.touches.length === 2) initialPinchDist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY); }, {passive: false});
+            container.addEventListener('touchstart', (e) => {
+                const t = e.changedTouches[0];
+                if (e.touches.length > 1) return; // Pinch
+                if (t.clientY < 100) return; // UI top
+                if (t.clientY > window.innerHeight - 100 && t.clientX > window.innerWidth / 2) return; // Weapon area
+                
+                if (t.clientX < window.innerWidth / 2) {
+                    e.preventDefault();
+                    handleJoystick(t);
+                } else {
+                    if (gameActive) handleInput(t.clientX, t.clientY);
+                }
+            }, {passive: false});
+
             container.addEventListener('touchmove', (e) => {
-                if (e.touches.length === 2 && initialPinchDist > 0) {
+                if (joystick.active) {
+                    e.preventDefault();
+                    handleJoystick(e.changedTouches[0]); // Update logic uses same math
+                    const t = e.changedTouches[0];
+                    const dx = t.clientX - joystick.originX;
+                    const dy = t.clientY - joystick.originY;
+                    const dist = Math.min(Math.sqrt(dx*dx+dy*dy), 50); const ang = Math.atan2(dy, dx);
+                    joyKnob.style.transform = `translate(calc(-50% + ${Math.cos(ang)*dist}px), calc(-50% + ${Math.sin(ang)*dist}px))`;
+                    joystick.valX = (dx/Math.sqrt(dx*dx+dy*dy || 1)) * (dist/50);
+                    joystick.valY = (dy/Math.sqrt(dx*dx+dy*dy || 1)) * (dist/50);
+                }
+            }, {passive: false});
+
+            container.addEventListener('touchend', (e) => {
+                if (joystick.active) resetJoystick();
+            });
+
+            let initialPinch = 0;
+            container.addEventListener('touchstart', (e) => { if (e.touches.length === 2) initialPinch = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY); }, {passive: false});
+            container.addEventListener('touchmove', (e) => {
+                if (e.touches.length === 2 && initialPinch > 0) {
                     const dist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
-                    zoomLevel = THREE.MathUtils.clamp(zoomLevel / (dist / initialPinchDist > 1 ? 1.04 : 0.96), CONFIG.cameraDefaults.minZoom, CONFIG.cameraDefaults.maxZoom);
-                    initialPinchDist = dist;
+                    zoomLevel = THREE.MathUtils.clamp(zoomLevel / (dist / initialPinch > 1 ? 1.04 : 0.96), CONFIG.cameraDefaults.minZoom, CONFIG.cameraDefaults.maxZoom);
+                    initialPinch = dist;
                 }
             }, {passive: false});
 
