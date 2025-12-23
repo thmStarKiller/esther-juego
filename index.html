@@ -8,7 +8,7 @@
         body { margin: 0; overflow: hidden; background-color: #050505; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; touch-action: none; user-select: none; -webkit-user-select: none; }
         #canvas-container { width: 100vw; height: 100vh; position: relative; overflow: hidden; }
         
-        /* UI Game Elements - Sophisticated Glassmorphism */
+        /* UI Game Elements */
         #ui {
             position: absolute; top: 40px; left: 20px;
             color: white; background: rgba(0, 0, 0, 0.6);
@@ -204,13 +204,12 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
     <script>
-        // --- GLOBAL VARIABLES ---
-        let scene = new THREE.Scene();
-        let camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-        let renderer = new THREE.WebGLRenderer({ antialias: true });
-
+        // --- GLOBAL VARIABLES (TOP LEVEL INITIALIZATION) ---
+        let scene, camera, renderer;
         let container, scoreBox, messageBox, nameTagLabel, joyZone, joyKnob, startBtn, vortexOverlay, introOverlay, skipLayer, skipBtn, weaponSelector, uiOverlay;
-        let mats;
+        let mats = {};
+        
+        // Game State
         let gameActive = false, score = 0, currentWeapon = 'laser', zoomLevel = 1.0;
         let enemies = [], particles = [], effects = [], joystick = { active: false, x: 0, y: 0 };
         const keys = { w:0, a:0, s:0, d:0 };
@@ -218,7 +217,6 @@
         let lastVortexTime = 0, initialPinchDist = 0;
         let esther = new THREE.Group();
         const bodyParts = {};
-        const furniturePhysics = []; // For collisions
 
         // --- CONFIG ---
         const CONFIG = {
@@ -228,14 +226,13 @@
                 bg: 0x050505, beam: 0x00ff88, skin: 0xdabfa6, 
                 mustard: 0xca8c2a, 
                 mouth: 0xb22222,
-                hair: 0x221a15,
-                eyeshadow: 0x5a4d41, // Elegant subtle shadow
-                blush: 0xffb2b2      // Soft pink blush
+                hair: 0x221a15
             },
             vortexCooldownTime: 15000 
         };
 
         // Audio Management
+        let speechSynth = window.speechSynthesis;
         const audio = {
             ctx: null,
             init() { if (this.ctx) return; try { this.ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) {} },
@@ -255,22 +252,25 @@
                     window.speechSynthesis.cancel();
                     const u = new SpeechSynthesisUtterance(text);
                     u.lang = 'es-ES'; u.rate = 0.95; u.pitch = 1.0;
-                    const vs = window.speechSynthesis.getVoices();
+                    const vs = speechSynth.getVoices();
                     u.voice = vs.find(v => v.lang.includes('es-ES') && (v.name.includes('Helena') || v.name.includes('Lucia'))) || vs.find(v => v.lang.includes('es')) || vs[0];
                     if (callback) u.onend = callback;
-                    window.speechSynthesis.speak(u);
+                    speechSynth.speak(u);
                 }
             }
         };
 
         // --- TEXTURE STUDIO ---
         const TextureStudio = {
-            generateKnit(colorHex) {
-                const c = document.createElement('canvas'); c.width = 64; c.height = 64;
+            generateCheese() {
+                const c = document.createElement('canvas'); c.width = 256; c.height = 256;
                 const ctx = c.getContext('2d');
-                ctx.fillStyle = colorHex; ctx.fillRect(0,0,64,64);
-                ctx.strokeStyle = 'rgba(0,0,0,0.1)';
-                for(let i=0; i<64; i+=4) { ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,64); ctx.stroke(); }
+                ctx.fillStyle = '#ffd500'; ctx.fillRect(0,0,256,256);
+                for(let i=0; i<60; i++) {
+                    const x = Math.random()*256, y = Math.random()*256, r = 7 + Math.random()*12;
+                    ctx.save(); ctx.fillStyle = '#4a3b00'; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI*2); ctx.fill();
+                    ctx.strokeStyle = '#fff4a3'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI*2); ctx.stroke(); ctx.restore();
+                }
                 return new THREE.CanvasTexture(c);
             },
             generateMarble() {
@@ -281,24 +281,35 @@
                 for(let i=0; i<100; i++) { ctx.beginPath(); ctx.moveTo(Math.random()*512, Math.random()*512); ctx.lineTo(Math.random()*512, Math.random()*512); ctx.stroke(); }
                 const tex = new THREE.CanvasTexture(c); tex.wrapS = tex.wrapT = THREE.RepeatWrapping; return tex;
             },
-            generateCheese() {
-                const c = document.createElement('canvas'); c.width = 256; c.height = 256;
-                const ctx = c.getContext('2d');
-                ctx.fillStyle = '#ffd500'; ctx.fillRect(0,0,256,256);
-                for(let i=0; i<80; i++) {
-                    const x = Math.random()*256, y = Math.random()*256, r = 6 + Math.random()*14;
-                    ctx.save(); ctx.fillStyle = '#4a3b00'; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI*2); ctx.fill();
-                    ctx.strokeStyle = '#fff4a3'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI*2); ctx.stroke(); ctx.restore();
-                }
-                return new THREE.CanvasTexture(c);
-            },
             generateMilk() {
                 const c = document.createElement('canvas'); c.width = 256; c.height = 512;
                 const ctx = c.getContext('2d');
                 ctx.fillStyle = '#ffffff'; ctx.fillRect(0,0,256,512);
                 ctx.fillStyle = '#0055ff'; ctx.fillRect(0,100,256,60); 
-                ctx.fillStyle = '#111'; ctx.font = "bold 44px Arial"; ctx.textAlign = "center"; ctx.fillText("MILK", 128, 300);
-                ctx.font = "bold 20px Arial"; ctx.fillText("L'Oréal E-Com", 128, 350);
+                ctx.fillStyle = '#111'; ctx.font = "bold 42px Arial"; ctx.textAlign = "center"; ctx.fillText("MILK", 128, 320);
+                return new THREE.CanvasTexture(c);
+            },
+            generateButter() {
+                const c = document.createElement('canvas'); c.width = 256; c.height = 256;
+                const ctx = c.getContext('2d');
+                ctx.fillStyle = '#fceabb'; ctx.fillRect(0,0,256,256);
+                ctx.fillStyle = '#e5b83b'; ctx.font = "bold 32px Arial"; ctx.textAlign = "center"; ctx.fillText("BUTTER", 128, 140);
+                return new THREE.CanvasTexture(c);
+            },
+            generateYogurt() {
+                const c = document.createElement('canvas'); c.width = 128; c.height = 128;
+                const ctx = c.getContext('2d');
+                ctx.fillStyle = '#eee'; ctx.fillRect(0,0,128,128);
+                ctx.fillStyle = '#ff0066'; ctx.fillRect(0,40,128,20);
+                return new THREE.CanvasTexture(c);
+            },
+            generateKnit(colorHex) {
+                const c = document.createElement('canvas'); c.width = 64; c.height = 64;
+                const ctx = c.getContext('2d');
+                ctx.fillStyle = colorHex; ctx.fillRect(0,0,64,64);
+                ctx.strokeStyle = 'rgba(0,0,0,0.1)';
+                for(let i=0; i<64; i+=4) { ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,64); ctx.stroke(); }
+                for(let i=0; i<64; i+=4) { ctx.beginPath(); ctx.moveTo(0,i); ctx.lineTo(64,i); ctx.stroke(); }
                 return new THREE.CanvasTexture(c);
             }
         };
@@ -327,6 +338,9 @@
                 floor: new THREE.MeshStandardMaterial({ map: TextureStudio.generateMarble(), roughness: 0.1, metalness: 0.4 }),
                 cheese: new THREE.MeshStandardMaterial({ map: TextureStudio.generateCheese(), roughness: 0.4 }),
                 milk: new THREE.MeshStandardMaterial({ map: TextureStudio.generateMilk(), roughness: 0.15 }),
+                butter: new THREE.MeshStandardMaterial({ map: TextureStudio.generateButter(), roughness: 0.5 }),
+                yogurt: new THREE.MeshStandardMaterial({ map: TextureStudio.generateYogurt(), roughness: 0.2 }),
+                silver: new THREE.MeshStandardMaterial({ color: 0xcccccc, metalness: 0.9, roughness: 0.1 }),
                 beam: new THREE.MeshBasicMaterial({ color: CONFIG.colors.beam, transparent: true, opacity: 0.8 }),
                 gloss: new THREE.MeshStandardMaterial({ color: CONFIG.colors.gloss, metalness: 0.9, roughness: 0.1 }),
                 vortex: new THREE.MeshBasicMaterial({ color: CONFIG.colors.vortex, transparent: true, opacity: 0.5, side: THREE.DoubleSide })
@@ -348,7 +362,7 @@
             const btnGeo = new THREE.CylinderGeometry(0.06, 0.06, 0.02, 16);
             for(let i=0; i<3; i++) {
                 const btn = new THREE.Mesh(btnGeo, new THREE.MeshStandardMaterial({color:0x222}));
-                btn.position.set(0, 1.1 - (i*0.25), 0.38); btn.rotation.x = Math.PI/2; torso.add(btn);
+                btn.position.set(0, 1.1 - (i*0.25), 0.4); btn.rotation.x = Math.PI/2; torso.add(btn);
             }
             const puffGeo = new THREE.SphereGeometry(0.38, 16, 16);
             const puffL = new THREE.Mesh(puffGeo, mats.sweater); puffL.position.set(-0.55, 1.1, 0); torso.add(puffL);
@@ -365,26 +379,19 @@
             torso.add(lArmGroup); bodyParts.armL = lArmGroup;
             esther.add(torso);
 
-            // HEAD & FACE (Makeup fix!)
+            // HEAD & FACE (The fix!)
             const head = new THREE.Group(); head.position.y = 2.8;
             const skull = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.6, 24), mats.skin); head.add(skull);
+            
+            // Eyes (Set forward at 0.31)
             const eyeGeo = new THREE.SphereGeometry(0.045, 8, 8);
             const eyeL = new THREE.Mesh(eyeGeo, new THREE.MeshBasicMaterial({color:0x000})); eyeL.position.set(-0.11, 0.15, 0.31); head.add(eyeL);
             const eyeR = eyeL.clone(); eyeR.position.set(0.11, 0.15, 0.31); head.add(eyeR);
             
-            // Subtle Eyeshadow (Makeup)
-            const shadowGeo = new THREE.PlaneGeometry(0.14, 0.05);
-            const shadowMat = new THREE.MeshBasicMaterial({color: CONFIG.colors.eyeshadow, transparent: true, opacity: 0.5});
-            const shadowL = new THREE.Mesh(shadowGeo, shadowMat); shadowL.position.set(-0.11, 0.21, 0.32); head.add(shadowL);
-            const shadowR = shadowL.clone(); shadowR.position.set(0.11, 0.21, 0.32); head.add(shadowR);
-
-            // Blush (Makeup)
-            const blushGeo = new THREE.CircleGeometry(0.06, 16);
-            const blushMat = new THREE.MeshBasicMaterial({color: CONFIG.colors.blush, transparent: true, opacity: 0.4});
-            const blushL = new THREE.Mesh(blushGeo, blushMat); blushL.position.set(-0.18, 0, 0.32); head.add(blushL);
-            const blushR = blushL.clone(); blushR.position.set(0.18, 0, 0.32); head.add(blushR);
-
+            // Mouth (Lipstick Red)
             const mouth = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.06, 0.02), new THREE.MeshBasicMaterial({color:CONFIG.colors.mouth})); mouth.position.set(0, -0.1, 0.32); head.add(mouth);
+            
+            // Bun
             const bun = new THREE.Mesh(new THREE.SphereGeometry(0.32), new THREE.MeshStandardMaterial({color:CONFIG.colors.hair})); bun.position.set(0, 0.3, -0.2); head.add(bun);
             esther.add(head);
 
@@ -400,31 +407,36 @@
             const floor = new THREE.Mesh(new THREE.PlaneGeometry(120, 120), mats.floor); floor.rotation.x = -Math.PI/2; floor.receiveShadow = true; scene.add(floor);
             const deskPositions = [[-20,-15], [20,-15], [-20,15], [20,15], [0, -30]];
             deskPositions.forEach(p => {
-                const d = new THREE.Mesh(new THREE.BoxGeometry(11, 1.5, 5), new THREE.MeshStandardMaterial({color:0x2b1d14, roughness:0.6})); d.position.set(p[0], 0.75, p[1]); d.castShadow = true; scene.add(d);
-                furniturePhysics.push(new THREE.Box3().setFromObject(d));
-                const screen = new THREE.Mesh(new THREE.PlaneGeometry(3.0, 1.9), new THREE.MeshBasicMaterial({color:0x00aaff, emissive: 0x00aaff, emissiveIntensity: 0.5})); screen.position.set(p[0], 2.5, p[1]-1.75); scene.add(screen);
+                const d = new THREE.Mesh(new THREE.BoxGeometry(11, 0.25, 5), new THREE.MeshStandardMaterial({color:0x2b1d14, roughness:0.6})); d.position.set(p[0], 1.6, p[1]); d.castShadow = true; scene.add(d);
+                const screen = new THREE.Mesh(new THREE.PlaneGeometry(3.0, 1.9), new THREE.MeshBasicMaterial({color:0x00aaff, emissive: 0x00aaff, emissiveIntensity: 0.5})); screen.position.set(p[0], 3.3, p[1]-1.75); scene.add(screen);
             });
         }
 
-        function spawnEnemy() {
-            const types = ['cheese', 'milk'];
-            const type = types[Math.floor(Math.random() * types.length)];
-            const angle = Math.random()*Math.PI*2, radius = 40; 
-            const x = Math.cos(angle)*radius, z = Math.sin(angle)*radius;
+        function createDairy(type) {
             let group = new THREE.Group();
             if (type === 'cheese') {
-                const wheel = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.2, 0.6, 24), mats.cheese); 
-                // Face up logic: No X rotation,standing on flat side
-                group.add(wheel);
-            } else {
-                const box = new THREE.Mesh(new THREE.BoxGeometry(1, 2.2, 1), mats.milk); 
-                const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.2), new THREE.MeshBasicMaterial({color: 0x0055ff}));
-                cap.position.y = 1.15; box.add(cap);
-                group.add(box);
+                const wheel = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.2, 0.6, 24), mats.cheese); wheel.rotation.x = Math.PI/2; group.add(wheel);
+            } else if (type === 'milk') {
+                const box = new THREE.Mesh(new THREE.BoxGeometry(1, 2.2, 1), mats.milk); group.add(box);
+            } else if (type === 'butter') {
+                const block = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.8, 1), mats.butter); group.add(block);
+            } else if (type === 'yogurt') {
+                const cup = new THREE.Mesh(new THREE.CylinderGeometry(0.7, 0.5, 0.8, 16), mats.yogurt);
+                const lid = new THREE.Mesh(new THREE.CircleGeometry(0.72, 16), mats.silver);
+                lid.rotation.x = -Math.PI/2; lid.position.y = 0.41; group.add(cup); group.add(lid);
             }
-            group.position.set(x, 25, z); group.castShadow = true; scene.add(group);
+            return group;
+        }
+
+        function spawnEnemy() {
+            const types = ['cheese', 'milk', 'butter', 'yogurt'];
+            const type = types[Math.floor(Math.random() * types.length)];
+            const angle = Math.random()*Math.PI*2, radius = 42; 
+            const x = Math.cos(angle)*radius, z = Math.sin(angle)*radius;
+            const mesh = createDairy(type);
+            mesh.position.set(x, 25, z); mesh.castShadow = true; scene.add(mesh);
             const enemy = { 
-                mesh: group, speed: 0.12 + Math.random()*0.06, dropping: true, dropProgress: 0, targetY: 0.7, markForDeletion: false,
+                mesh, speed: 0.12 + Math.random()*0.06, dropping: true, dropProgress: 0, targetY: 1, markForDeletion: false,
                 destroy() {
                     this.markForDeletion = true;
                     triggerExplosion(this.mesh.position, currentWeapon==='vortex'? 0xff00ff : (currentWeapon==='gloss'? 0xff00cc : 0xffffff), true);
@@ -437,7 +449,7 @@
         function triggerExplosion(pos, color=0xffffff, isBig=false) {
             const count = isBig ? 45 : 15; audio.playSound('explosion');
             for(let i=0; i<count; i++) {
-                const p = new THREE.Mesh(new THREE.BoxGeometry(0.35,0.35,0.35), new THREE.MeshBasicMaterial({color, transparent:true}));
+                const p = new THREE.Mesh(new THREE.BoxGeometry(0.3,0.3,0.3), new THREE.MeshBasicMaterial({color, transparent:true}));
                 p.position.copy(pos);
                 particles.push({ mesh: p, vel: new THREE.Vector3((Math.random()-0.5)*(isBig?2.5:1.2), (Math.random()-0.5)*(isBig?2.5:1.2), (Math.random()-0.5)*(isBig?2.5:1.2)), life: 1.0 });
                 scene.add(p);
@@ -458,7 +470,7 @@
                 scene.add(b); effects.push({ mesh: b, life: 1.0, type: 'beam' });
                 triggerExplosion(targetPos, 0x00ff88, false);
             } else if(currentWeapon==='gloss') {
-                const tube = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.7), mats.gloss);
+                const tube = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.7), mats.gloss);
                 tube.position.copy(startPos); scene.add(tube);
                 effects.push({ mesh: tube, life: 1.2, type: 'gloss_grenade', vel: targetPos.clone().sub(startPos).normalize().multiplyScalar(1.5), gravity: 0.04 });
             } else if(currentWeapon==='vortex') {
@@ -481,7 +493,8 @@
             window.speechSynthesis.cancel();
             introOverlay.style.display = 'none'; skipLayer.style.display = 'none';
             uiOverlay.style.display = 'flex'; weaponSelector.style.display = 'flex'; joyZone.style.display = 'block';
-            nameTagLabel.style.display = 'block'; gameActive = true; resetGame();
+            nameTagLabel.style.display = 'block'; gameActive = true; 
+            resetGame();
         }
 
         function playIntro() { introOverlay.style.display = 'flex'; skipLayer.style.display = 'block'; initStarfield(); audio.speak(document.getElementById('crawl-container').innerText, () => { endIntro(); }); }
@@ -498,33 +511,42 @@
             draw();
         }
 
+        function updateJoy(t) {
+            const r = joyZone.getBoundingClientRect(), cx = r.left + r.width/2, cy = r.top + r.height/2;
+            let dx = t.clientX - cx, dy = t.clientY - cy;
+            const dist = Math.min(Math.sqrt(dx*dx+dy*dy), 40); const ang = Math.atan2(dy, dx);
+            joyKnob.style.transform = `translate(calc(-50% + ${(dx/Math.sqrt(dx*dx+dy*dy || 1))*dist}px), calc(-50% + ${(dy/Math.sqrt(dx*dx+dy*dy || 1))*dist}px))`;
+            joystick.x = (dx/Math.sqrt(dx*dx+dy*dy || 1)) * (dist/40); joystick.y = (dy/Math.sqrt(dx*dx+dy*dy || 1)) * (dist/40);
+        }
+
+        function handleInput(clientX, clientY) {
+            const raycaster = new THREE.Raycaster(), mouseV = new THREE.Vector2();
+            mouseV.x = (clientX / window.innerWidth) * 2 - 1; mouseV.y = -(clientY / window.innerHeight) * 2 + 1;
+            raycaster.setFromCamera(mouseV, camera);
+            if(currentWeapon === 'vortex') { fireWeapon(new THREE.Vector3()); return; }
+            const intersects = raycaster.intersectObjects(scene.children, true);
+            for(let hit of intersects) {
+                const idx = enemies.findIndex(e => e && !e.markForDeletion && (e.mesh === hit.object || e.mesh.children.includes(hit.object)));
+                if(idx > -1) {
+                    esther.rotation.y = Math.atan2(enemies[idx].mesh.position.x - esther.position.x, enemies[idx].mesh.position.z - esther.position.z);
+                    fireWeapon(enemies[idx].mesh.position);
+                    if(currentWeapon!=='gloss') enemies[idx].destroy();
+                    return;
+                }
+            }
+        }
+
         function animate() {
             requestAnimationFrame(animate);
             if (gameActive) {
                 frameCount++;
                 if (frameCount % 60 === 0) spawnEnemy();
-                
-                // Input handling
                 let mx = joystick.active ? joystick.x : (keys.d - keys.a), mz = joystick.active ? joystick.y : (keys.s - keys.w);
-                
                 if (Math.abs(mx) > 0.05 || Math.abs(mz) > 0.05) {
-                    const nextX = esther.position.x + mx * CONFIG.moveSpeed;
-                    const nextZ = esther.position.z + mz * CONFIG.moveSpeed;
-                    
-                    // Collision check for Esther
-                    const playerBox = new THREE.Box3().setFromCenterAndSize(new THREE.Vector3(nextX, 1, nextZ), new THREE.Vector3(1, 2, 1));
-                    let collide = false;
-                    for(let box of furniturePhysics) { if(playerBox.intersectsBox(box)) collide = true; }
-                    
-                    if(!collide) {
-                        esther.position.x = nextX;
-                        esther.position.z = nextZ;
-                    }
-                    
+                    esther.position.x += mx * CONFIG.moveSpeed; esther.position.z += mz * CONFIG.moveSpeed;
                     esther.rotation.y = Math.atan2(mx, mz);
                     legAnimationTime += 0.35; bodyParts.legL.rotation.x = Math.sin(legAnimationTime)*0.7; bodyParts.legR.rotation.x = Math.cos(legAnimationTime)*0.7;
                 } else { bodyParts.legL.rotation.x = THREE.MathUtils.lerp(bodyParts.legL.rotation.x, 0, 0.2); bodyParts.legR.rotation.x = THREE.MathUtils.lerp(bodyParts.legR.rotation.x, 0, 0.2); }
-                
                 esther.position.clamp(new THREE.Vector3(-55, 0, -55), new THREE.Vector3(55, 0, 55));
                 const timeSV = Date.now() - lastVortexTime; vortexOverlay.style.height = (timeSV < 15000) ? (100 - (timeSV/15000*100)) + '%' : '0%';
                 
@@ -532,32 +554,12 @@
                     const e = enemies[i];
                     if (!e || e.markForDeletion) { enemies.splice(i, 1); continue; }
                     const t = esther.position.clone().add(new THREE.Vector3(0,1.8,0));
-                    
                     if(e.dropping) {
                         e.dropProgress += 0.04; e.mesh.position.y = THREE.MathUtils.lerp(25, e.targetY, Math.min(e.dropProgress, 1.0));
                         if(e.dropProgress >= 1.0) e.dropping = false;
                     } else {
-                        const dir = t.clone().sub(e.mesh.position).normalize();
-                        const nextPos = e.mesh.position.clone().add(dir.multiplyScalar(e.speed));
-                        
-                        // Collision check for Dairy
-                        const enemyBox = new THREE.Box3().setFromObject(e.mesh);
-                        enemyBox.setFromCenterAndSize(nextPos, new THREE.Vector3(1.5, 1.5, 1.5));
-                        let collide = false;
-                        for(let box of furniturePhysics) { if(enemyBox.intersectsBox(box)) collide = true; }
-                        
-                        if(!collide) {
-                            e.mesh.position.copy(nextPos);
-                        } else {
-                            // Slide logic simple: try x then z
-                            const nextPosX = e.mesh.position.clone().add(new THREE.Vector3(dir.x, 0, 0).multiplyScalar(e.speed));
-                            const boxX = new THREE.Box3().setFromCenterAndSize(nextPosX, new THREE.Vector3(1.5, 1.5, 1.5));
-                            let collideX = false;
-                            for(let box of furniturePhysics) if(boxX.intersectsBox(box)) collideX = true;
-                            if(!collideX) e.mesh.position.x = nextPosX.x;
-                        }
-                        
-                        e.mesh.lookAt(t);
+                        const d = t.clone().sub(e.mesh.position).normalize();
+                        e.mesh.position.add(d.multiplyScalar(e.speed)); e.mesh.lookAt(t);
                         if (e.mesh.position.distanceTo(t) < 1.6) { gameActive = false; document.getElementById('message').style.display = 'block'; audio.speak("Esther se cagó"); }
                     }
                 }
@@ -566,7 +568,9 @@
                     if(ef.type === 'beam') { ef.mesh.material.opacity = ef.life; }
                     else if(ef.type === 'gloss_grenade') { 
                         ef.mesh.position.add(ef.vel); ef.vel.y -= ef.gravity; if(ef.life < 0.1) {
-                            for(let j = enemies.length-1; j>=0; j--) if(enemies[j] && !enemies[j].markForDeletion && enemies[j].mesh.position.distanceTo(ef.mesh.position)<14) enemies[j].destroy();
+                            for(let j = enemies.length-1; j>=0; j--) {
+                                if(enemies[j] && !enemies[j].markForDeletion && enemies[j].mesh.position.distanceTo(ef.mesh.position)<14) enemies[j].destroy();
+                            }
                             triggerExplosion(ef.mesh.position, 0xff0066, true);
                         }
                     }
@@ -589,18 +593,27 @@
             renderer.render(scene, camera);
         }
 
+        // --- ONLOAD ---
         window.onload = () => {
             initGlobalSelectors();
-            initMaterials();
+            
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.shadowMap.enabled = true;
             renderer.shadowMap.type = THREE.PCFSoftShadowMap;
             container.appendChild(renderer.domElement);
+
+            initMaterials();
             buildEsther();
             buildOffice();
+            
             scene.add(new THREE.AmbientLight(0xffffff, 1.2));
             const dir = new THREE.DirectionalLight(0xffffff, 1.2); dir.position.set(20, 50, 20); dir.castShadow = true; scene.add(dir);
 
+            // Handlers
             startBtn.addEventListener('click', () => { document.getElementById('start-overlay').style.display='none'; audio.init(); audioEnabled=true; playIntro(); });
             startBtn.addEventListener('touchstart', (e) => { e.preventDefault(); document.getElementById('start-overlay').style.display='none'; audio.init(); audioEnabled=true; playIntro(); });
             skipBtn.addEventListener('click', endIntro);
@@ -636,24 +649,12 @@
                 if (!gameActive) { if(messageBox.style.display === 'block') resetGame(); return; }
                 const r = joyZone.getBoundingClientRect();
                 if (e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top) return;
-                const raycaster = new THREE.Raycaster(), mouseV = new THREE.Vector2();
-                mouseV.x = (e.clientX / window.innerWidth) * 2 - 1; mouseV.y = -(e.clientY / window.innerHeight) * 2 + 1;
-                raycaster.setFromCamera(mouseV, camera);
-                if(currentWeapon === 'vortex') { fireWeapon(new THREE.Vector3()); return; }
-                const intersects = raycaster.intersectObjects(scene.children, true);
-                for(let hit of intersects) {
-                    const idx = enemies.findIndex(e => e && !e.markForDeletion && (e.mesh === hit.object || e.mesh.children.includes(hit.object)));
-                    if(idx > -1) {
-                        esther.rotation.y = Math.atan2(enemies[idx].mesh.position.x - esther.position.x, enemies[idx].mesh.position.z - esther.position.z);
-                        fireWeapon(enemies[idx].mesh.position);
-                        if(currentWeapon!=='gloss') enemies[idx].destroy();
-                        return;
-                    }
-                }
+                handleInput(e.clientX, e.clientY);
             });
             document.querySelectorAll('.weapon-btn').forEach(btn => btn.addEventListener('click', () => { 
                 document.querySelectorAll('.weapon-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); currentWeapon = btn.dataset.weapon; 
             }));
+
             animate();
         };
 
