@@ -10,7 +10,7 @@
         
         /* UI Game Elements - Sophisticated Glassmorphism */
         #ui {
-            position: absolute; top: max(20px, env(safe-area-inset-top)); left: 20px;
+            position: absolute; top: max(20px, env(safe-area-inset-top)); left: max(20px, env(safe-area-inset-left));
             color: white; background: rgba(0, 0, 0, 0.6);
             padding: 8px 15px; border-radius: 12px;
             pointer-events: none; border: 1px solid rgba(0, 176, 111, 0.5);
@@ -24,21 +24,21 @@
         #weapon-selector {
             position: absolute; 
             top: 50%; 
-            right: 15px; 
+            right: max(15px, env(safe-area-inset-right));
             transform: translateY(-50%);
             display: none; 
             flex-direction: column; 
             gap: 10px; 
             background: rgba(0,0,0,0.6); 
-            padding: 10px; border-radius: 20px;
+            padding: 8px; border-radius: 18px;
             border: 1px solid rgba(255,255,255,0.1);
             z-index: 600; backdrop-filter: blur(8px);
         }
         .weapon-btn {
-            width: 40px; height: 40px; /* Small and elegant */
+            width: 38px; height: 38px; /* Petite */
             border-radius: 10px; border: 1px solid rgba(255,255,255,0.1);
             background: rgba(40,40,40,0.8); color: white;
-            font-size: 1.2rem; display: flex; align-items: center; justify-content: center;
+            font-size: 1.1rem; display: flex; align-items: center; justify-content: center;
             cursor: pointer; position: relative; overflow: hidden;
             transition: all 0.2s; -webkit-tap-highlight-color: transparent;
         }
@@ -80,7 +80,7 @@
         #crawl-perspective { width: 90%; height: 100%; perspective: 350px; display: flex; justify-content: center; }
         #crawl-container {
             position: relative; width: 100%; max-width: 650px;
-            color: #ffde11; font-size: 1.1rem; font-weight: 800;
+            color: #ffde11; font-size: clamp(0.9rem, 4vw, 1.4rem); font-weight: 800;
             text-align: center; transform: rotateX(25deg);
             animation: crawl 260s linear forwards; line-height: 1.6;
         }
@@ -88,12 +88,12 @@
         
         #skip-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 3000; pointer-events: none; display: none; }
         #skip-intro {
-            position: absolute; top: max(20px, env(safe-area-inset-top)); right: 20px;
+            position: absolute; top: max(20px, env(safe-area-inset-top)); right: max(20px, env(safe-area-inset-right));
             background: rgba(0, 176, 111, 0.9); color: white;
-            border: 2px solid white; padding: 10px 20px; border-radius: 50px;
+            border: 2px solid white; padding: 12px 24px; border-radius: 50px;
             cursor: pointer; pointer-events: auto; font-weight: 900;
             text-transform: uppercase; letter-spacing: 1px;
-            font-size: 0.8rem; box-shadow: 0 5px 15px rgba(0,0,0,0.5); -webkit-tap-highlight-color: transparent;
+            font-size: 0.9rem; box-shadow: 0 5px 15px rgba(0,0,0,0.5); -webkit-tap-highlight-color: transparent;
         }
 
         #start-overlay {
@@ -129,7 +129,7 @@
             display: none; text-transform: uppercase; letter-spacing: 2px; border: 1px solid #00ff88;
         }
 
-        .controls-hint { position: absolute; bottom: 8px; width: 100%; text-align: center; color: rgba(255,255,255,0.2); pointer-events: none; font-size: 0.7rem; text-transform: uppercase; z-index: 5; }
+        .controls-hint { position: absolute; bottom: max(8px, env(safe-area-inset-bottom)); width: 100%; text-align: center; color: rgba(255,255,255,0.2); pointer-events: none; font-size: 0.7rem; text-transform: uppercase; z-index: 5; }
     </style>
 </head>
 <body>
@@ -237,6 +237,9 @@
                     const AudioContext = window.AudioContext || window.webkitAudioContext;
                     audioCtx = new AudioContext();
                     speechSynth = window.speechSynthesis;
+                    if(speechSynth && speechSynth.onvoiceschanged !== undefined) {
+                        speechSynth.onvoiceschanged = () => { /* voices loaded */ };
+                    }
                 } catch(e) { console.warn("Audio Context init failed"); }
             },
             playSound(type) {
@@ -361,7 +364,20 @@
             const eyeGeo = new THREE.SphereGeometry(0.045, 8, 8);
             const eyeL = new THREE.Mesh(eyeGeo, new THREE.MeshBasicMaterial({color:0x000})); eyeL.position.set(-0.11, 0.15, 0.31); head.add(eyeL);
             const eyeR = eyeL.clone(); eyeR.position.set(0.11, 0.15, 0.31); head.add(eyeR);
-            const mouth = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.06, 0.02), new THREE.MeshBasicMaterial({color:CONFIG.colors.mouth})); mouth.position.set(0, -0.1, 0.32); head.add(mouth);
+
+            // Makeup: Eyeshadow
+            const shadowGeo = new THREE.SphereGeometry(0.05, 8, 8);
+            const shadowMat = new THREE.MeshBasicMaterial({color: 0x4b0082, transparent: true, opacity: 0.5});
+            const shadowL = new THREE.Mesh(shadowGeo, shadowMat); shadowL.scale.set(1.2, 0.6, 0.5); shadowL.position.set(-0.11, 0.19, 0.30); head.add(shadowL);
+            const shadowR = new THREE.Mesh(shadowGeo, shadowMat); shadowR.scale.set(1.2, 0.6, 0.5); shadowR.position.set(0.11, 0.19, 0.30); head.add(shadowR);
+
+            // Makeup: Blush
+            const blushGeo = new THREE.SphereGeometry(0.09, 8, 8);
+            const blushMat = new THREE.MeshBasicMaterial({color: 0xff69b4, transparent: true, opacity: 0.3});
+            const blushL = new THREE.Mesh(blushGeo, blushMat); blushL.scale.set(1, 0.6, 0.3); blushL.position.set(-0.18, -0.05, 0.28); head.add(blushL);
+            const blushR = new THREE.Mesh(blushGeo, blushMat); blushR.scale.set(1, 0.6, 0.3); blushR.position.set(0.18, -0.05, 0.28); head.add(blushR);
+
+            const mouth = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.06, 0.02), new THREE.MeshBasicMaterial({color:0xff0000})); mouth.position.set(0, -0.1, 0.32); head.add(mouth);
             const bun = new THREE.Mesh(new THREE.SphereGeometry(0.32), new THREE.MeshStandardMaterial({color:CONFIG.colors.hair})); bun.position.set(0, 0.3, -0.2); head.add(bun);
             esther.add(head);
             const lanyard = new THREE.Mesh(new THREE.TorusGeometry(0.55, 0.02, 4, 32, 3.8), new THREE.MeshStandardMaterial({color:0x111})); lanyard.position.set(0,1.95,0.08); lanyard.rotation.z=Math.PI; lanyard.scale.set(1,2.1,1); esther.add(lanyard);
@@ -374,12 +390,26 @@
         function buildOffice() {
             collidables = [];
             const floor = new THREE.Mesh(new THREE.PlaneGeometry(120, 120), mats.floor); floor.rotation.x = -Math.PI/2; floor.receiveShadow = true; scene.add(floor);
+
+            // Wall decor
+            const posterGeo = new THREE.PlaneGeometry(8, 12);
+            const posterMat = new THREE.MeshBasicMaterial({color: 0x222, side: THREE.DoubleSide});
+            const poster = new THREE.Mesh(posterGeo, posterMat); poster.position.set(0, 10, -50); scene.add(poster);
+            const pText = new THREE.Mesh(new THREE.PlaneGeometry(6, 1), new THREE.MeshBasicMaterial({color: 0xff00ff})); pText.position.set(0, 12, -49.9); scene.add(pText);
+
             const deskPositions = [[-20,-15], [20,-15], [-20,15], [20,15], [0, -30]];
             deskPositions.forEach(p => {
                 const d = new THREE.Mesh(new THREE.BoxGeometry(11, 0.25, 5), new THREE.MeshStandardMaterial({color:0x2b1d14, roughness:0.6})); d.position.set(p[0], 1.6, p[1]); d.castShadow = true; scene.add(d);
                 const box = new THREE.Box3().setFromCenterAndSize(new THREE.Vector3(p[0], 1, p[1]), new THREE.Vector3(11.5, 5, 5.5));
                 collidables.push(box);
                 const screen = new THREE.Mesh(new THREE.PlaneGeometry(3.0, 1.9), new THREE.MeshBasicMaterial({color:0x00aaff, emissive: 0x00aaff, emissiveIntensity: 0.5})); screen.position.set(p[0], 3.3, p[1]-1.75); scene.add(screen);
+
+                // Plant
+                const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.4, 0.8), new THREE.MeshStandardMaterial({color:0x8b4513}));
+                pot.position.set(p[0]+3.5, 2.0, p[1]+1); scene.add(pot);
+                const leafGeo = new THREE.SphereGeometry(0.5);
+                const leafMat = new THREE.MeshStandardMaterial({color: 0x228b22});
+                const plant = new THREE.Mesh(leafGeo, leafMat); plant.scale.set(1, 2, 1); plant.position.set(p[0]+3.5, 3.0, p[1]+1); scene.add(plant);
             });
         }
 
@@ -394,6 +424,10 @@
                 mesh.rotation.x = 0; // Flat side up
             } else {
                 mesh = new THREE.Mesh(new THREE.BoxGeometry(1, 2.2, 1), mats.milk);
+                const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 0.1, 16), new THREE.MeshStandardMaterial({color: 0x0000ff}));
+                cap.position.set(0, 1.15, 0); mesh.add(cap);
+                const label = new THREE.Mesh(new THREE.PlaneGeometry(0.7, 0.8), new THREE.MeshBasicMaterial({color: 0xeeeeee}));
+                label.position.set(0, 0.2, 0.51); mesh.add(label);
             }
             mesh.position.set(x, 25, z); mesh.castShadow = true; scene.add(mesh);
             const enemy = { 
@@ -534,7 +568,8 @@
                                 if(!hitZ) e.mesh.position.z = slideZ.z;
                             }
                         }
-                        e.mesh.lookAt(t);
+                        if (e.mesh.geometry.type === 'CylinderGeometry') e.mesh.lookAt(t.x, e.mesh.position.y, t.z);
+                        else e.mesh.lookAt(t);
                         if (e.mesh.position.distanceTo(t) < 1.6) { gameActive = false; document.getElementById('message').style.display = 'block'; audio.speak("Esther se cagó"); }
                     }
                 }
@@ -576,10 +611,12 @@
             camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
             renderer = new THREE.WebGLRenderer({ antialias: true });
             
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.shadowMap.enabled = true;
-            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-            container.appendChild(renderer.domElement);
+            if (container) {
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                renderer.shadowMap.enabled = true;
+                renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+                container.appendChild(renderer.domElement);
+            }
 
             initMaterials();
             buildEsther();
@@ -602,6 +639,7 @@
             skipBtn.addEventListener('touchstart', (e) => { e.preventDefault(); endIntro(); });
             
             // TOUCH HANDLING (Multitouch enabled)
+            let joystickTimeout;
             container.addEventListener('touchstart', (e) => {
                 for (let t of e.changedTouches) {
                     if (t.clientX < window.innerWidth / 2 && !joystick.active) {
@@ -610,10 +648,18 @@
                         joystick.touchId = t.identifier;
                         joystick.originX = t.clientX;
                         joystick.originY = t.clientY;
-                        joyZone.style.display = 'block';
+
+                        // Phantom Joystick: Delay fade in
                         joyZone.style.left = joystick.originX + 'px';
                         joyZone.style.top = joystick.originY + 'px';
-                        requestAnimationFrame(() => joyZone.style.opacity = '1');
+
+                        joystickTimeout = setTimeout(() => {
+                            if(joystick.active) {
+                                joyZone.style.display = 'block';
+                                requestAnimationFrame(() => joyZone.style.opacity = '1');
+                            }
+                        }, 150); // 150ms delay for quick taps check
+
                     } else {
                         // Interaction thumb
                         handleInput(t.clientX, t.clientY);
@@ -639,7 +685,10 @@
 
             container.addEventListener('touchend', (e) => {
                 for (let t of e.changedTouches) {
-                    if (t.identifier === joystick.touchId) resetJoystick();
+                    if (t.identifier === joystick.touchId) {
+                        resetJoystick();
+                        if(joystickTimeout) clearTimeout(joystickTimeout);
+                    }
                 }
                 if (e.touches.length < 2) initialPinchDist = 0;
             });
