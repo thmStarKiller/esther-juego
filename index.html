@@ -717,6 +717,17 @@
             }
         });
 
+        function playIntro() {
+            if (introOverlay) introOverlay.style.display = 'flex';
+            if (skipLayer) skipLayer.style.display = 'block';
+            const crawl = document.getElementById('crawl-container');
+            if (crawl) {
+                crawl.style.animation = 'none';
+                crawl.offsetHeight; /* trigger reflow */
+                crawl.style.animation = 'crawl 260s linear forwards';
+            }
+        }
+
         function endIntro() {
             if (!introOverlay || introOverlay.style.display === 'none') return;
             if (speechSynth) speechSynth.cancel();
