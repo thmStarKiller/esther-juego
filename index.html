@@ -222,7 +222,7 @@
             colors: {
                 bg: 0x050505, beam: 0x00ff88, skin: 0xdabfa6, 
                 mustard: 0xca8c2a, 
-                mouth: 0xb22222,
+                mouth: 0xff0000,
                 hair: 0x221a15
             },
             vortexCooldownTime: 15000 
@@ -399,7 +399,7 @@
             const blushL = new THREE.Mesh(blushGeo, blushMat); blushL.scale.set(1, 0.6, 0.3); blushL.position.set(-0.18, -0.05, 0.28); head.add(blushL);
             const blushR = new THREE.Mesh(blushGeo, blushMat); blushR.scale.set(1, 0.6, 0.3); blushR.position.set(0.18, -0.05, 0.28); head.add(blushR);
 
-            const mouth = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.06, 0.02), new THREE.MeshBasicMaterial({color:0xff0000})); mouth.position.set(0, -0.1, 0.32); head.add(mouth);
+            const mouth = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.06, 0.02), new THREE.MeshBasicMaterial({color:CONFIG.colors.mouth})); mouth.position.set(0, -0.1, 0.32); head.add(mouth);
             const bun = new THREE.Mesh(new THREE.SphereGeometry(0.32), new THREE.MeshStandardMaterial({color:CONFIG.colors.hair})); bun.position.set(0, 0.3, -0.2); head.add(bun);
             esther.add(head);
             const lanyard = new THREE.Mesh(new THREE.TorusGeometry(0.55, 0.02, 4, 32, 3.8), new THREE.MeshStandardMaterial({color:0x111})); lanyard.position.set(0,1.95,0.08); lanyard.rotation.z=Math.PI; lanyard.scale.set(1,2.1,1); esther.add(lanyard);
@@ -626,6 +626,7 @@
         // --- ONLOAD ---
         window.onload = () => {
             initGlobalSelectors();
+            if (!container) { console.error("Container not found"); return; }
             
             scene = new THREE.Scene();
             scene.background = new THREE.Color(CONFIG.colors.bg);
@@ -633,12 +634,10 @@
             camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
             renderer = new THREE.WebGLRenderer({ antialias: true });
             
-            if (container) {
-                renderer.setSize(window.innerWidth, window.innerHeight);
-                renderer.shadowMap.enabled = true;
-                renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-                container.appendChild(renderer.domElement);
-            }
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            container.appendChild(renderer.domElement);
 
             initMaterials();
             buildEsther();
@@ -675,6 +674,7 @@
                         joyZone.style.left = joystick.originX + 'px';
                         joyZone.style.top = joystick.originY + 'px';
 
+                        if (joystickTimeout) clearTimeout(joystickTimeout);
                         joystickTimeout = setTimeout(() => {
                             if(joystick.active) {
                                 joyZone.style.display = 'block';
@@ -705,7 +705,7 @@
                 }
             }, {passive: false});
 
-            container.addEventListener('touchend', (e) => {
+            const handleTouchEnd = (e) => {
                 for (let t of e.changedTouches) {
                     if (t.identifier === joystick.touchId) {
                         resetJoystick();
@@ -713,7 +713,9 @@
                     }
                 }
                 if (e.touches.length < 2) initialPinchDist = 0;
-            });
+            };
+            container.addEventListener('touchend', handleTouchEnd);
+            container.addEventListener('touchcancel', handleTouchEnd);
 
             // PC Inputs
             window.addEventListener('keydown', (e) => { const k = e.key.toLowerCase(); if(k==='w') keys.w=1; if(k==='s') keys.s=1; if(k==='a') keys.a=1; if(k==='d') keys.d=1; });
