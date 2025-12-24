@@ -237,8 +237,17 @@
                     const AudioContext = window.AudioContext || window.webkitAudioContext;
                     audioCtx = new AudioContext();
                     speechSynth = window.speechSynthesis;
-                    if(speechSynth && speechSynth.onvoiceschanged !== undefined) {
-                        speechSynth.onvoiceschanged = () => { /* voices loaded */ };
+
+                    // Unlock audio
+                    if(audioCtx.state === 'suspended') audioCtx.resume();
+
+                    // Force voice loading
+                    if(speechSynth) {
+                        const empty = new SpeechSynthesisUtterance("");
+                        speechSynth.speak(empty);
+                        if(speechSynth.onvoiceschanged !== undefined) {
+                            speechSynth.onvoiceschanged = () => { /* voices loaded */ };
+                        }
                     }
                 } catch(e) { console.warn("Audio Context init failed"); }
             },
@@ -257,12 +266,25 @@
             speak(text, callback) {
                 if(speechSynth) {
                     speechSynth.cancel();
-                    const u = new SpeechSynthesisUtterance(text);
-                    u.lang = 'es-ES'; u.rate = 0.95; u.pitch = 1.0;
-                    const vs = speechSynth.getVoices();
-                    u.voice = vs.find(v => v.lang.includes('es-ES') && (v.name.includes('Helena') || v.name.includes('Lucia'))) || vs.find(v => v.lang.includes('es')) || vs[0];
-                    if (callback) u.onend = callback;
-                    speechSynth.speak(u);
+                    const attemptSpeak = () => {
+                        const u = new SpeechSynthesisUtterance(text);
+                        u.lang = 'es-ES'; u.rate = 0.95; u.pitch = 1.0;
+                        const vs = speechSynth.getVoices();
+                        if (vs.length > 0) {
+                            u.voice = vs.find(v => v.lang.includes('es-ES') && (v.name.includes('Helena') || v.name.includes('Lucia'))) || vs.find(v => v.lang.includes('es')) || vs[0];
+                        }
+                        if (callback) u.onend = callback;
+                        speechSynth.speak(u);
+                    };
+
+                    if (speechSynth.getVoices().length === 0) {
+                        speechSynth.onvoiceschanged = () => {
+                            speechSynth.onvoiceschanged = null;
+                            attemptSpeak();
+                        };
+                    } else {
+                        attemptSpeak();
+                    }
                 }
             }
         };
@@ -699,7 +721,11 @@
             window.addEventListener('wheel', (e) => { zoomLevel = THREE.MathUtils.clamp(zoomLevel + e.deltaY * 0.001, CONFIG.cameraDefaults.minZoom, CONFIG.cameraDefaults.maxZoom); });
             
             container.addEventListener('mousedown', (e) => {
-                if (!gameActive && messageBox.style.display === 'block') resetGame();
+                if (gameActive) {
+                    handleInput(e.clientX, e.clientY);
+                } else if (messageBox.style.display === 'block') {
+                    resetGame();
+                }
             });
             
             document.querySelectorAll('.weapon-btn').forEach(btn => btn.addEventListener('click', () => { 
@@ -720,6 +746,21 @@
         function playIntro() {
             if (introOverlay) introOverlay.style.display = 'flex';
             if (skipLayer) skipLayer.style.display = 'block';
+
+            // Render Starfield
+            const canvas = document.getElementById('starfield');
+            if (canvas) {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+                const ctx = canvas.getContext('2d');
+                ctx.fillStyle = '#000'; ctx.fillRect(0,0,canvas.width,canvas.height);
+                for(let i=0; i<400; i++) {
+                    const x = Math.random() * canvas.width, y = Math.random() * canvas.height;
+                    const r = Math.random() * 1.5;
+                    ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI*2); ctx.fillStyle = 'white'; ctx.fill();
+                }
+            }
+
             const crawl = document.getElementById('crawl-container');
             if (crawl) {
                 crawl.style.animation = 'none';
